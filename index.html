@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modos de Ressonância em Tubos Sonoros</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Nova Paleta de Cores */
+        :root {
+            --bg-color: #E7F0C7;      /* Light Greenish-Yellow */
+            --container-bg: #FFFFFF;  /* White */
+            --tube-color: #E9A97F;    /* Peach/Tan */
+            --text-color: #000000;    /* Black */
+            --ui-color: #C87F8B;      /* Dusty Pink */
+            --high-pressure: #C87F8B; /* Dusty Pink */
+            --low-pressure: #000000;  /* Black */
+            --ui-text-color: #FFFFFF; /* White */
+            --info-box-bg: #FFFFFF;   /* White */
+            --slider-track-color: #BCDFB9; /* Light Green */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* Estilização customizada para o slider */
+        input[type="range"] {
+            -webkit-appearance: none; appearance: none;
+            width: 100%; height: 8px; background-color: var(--slider-track-color);
+            border-radius: 5px; outline: none; opacity: 0.9;
+            transition: opacity .2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 24px; height: 24px; background: var(--ui-color);
+            cursor: pointer; border-radius: 50%;
+            border: 3px solid var(--container-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 24px; height: 24px; background: var(--ui-color);
+            cursor: pointer; border-radius: 50%;
+            border: 3px solid var(--container-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .control-radio:checked + label {
+            background-color: var(--ui-color);
+            color: var(--ui-text-color);
+            border-color: var(--ui-color);
+        }
+        
+        /* Botão Play Melhorado */
+        #play-button {
+            background-color: var(--ui-color);
+            color: var(--ui-text-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: background-color 0.2s, transform 0.15s ease-out, box-shadow 0.2s ease-out;
+        }
+        #play-button:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+        #play-button:active {
+            transform: scale(0.95) translateY(0);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        #explanation-toggle svg {
+            transition: transform 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl rounded-2xl shadow-lg p-6 md:p-8 space-y-6" style="background-color: var(--container-bg); border: 1px solid var(--tube-color);">
+        
+        <header class="text-center pb-4 border-b" style="border-color: var(--tube-color);">
+            <h1 class="text-3xl md:text-4xl font-bold">Ressonância em Tubos Sonoros</h1>
+            <p class="text-md mt-2">Visualize a pressão e o deslocamento das partículas de ar.</p>
+            <p class="text-sm mt-3 opacity-70">Considerando L = 1,70 m e Velocidade do som (v) = 343 m/s</p>
+        </header>
+
+        <!-- Controles da Simulação -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center pt-4">
+            <div class="flex flex-col items-center">
+                <span class="font-semibold mb-3">Tipo de Tubo</span>
+                <div class="flex space-x-2">
+                    <input type="radio" id="open-tube" name="tube-type" value="open" class="hidden control-radio" checked>
+                    <label for="open-tube" class="px-6 py-2 rounded-lg cursor-pointer transition-all duration-300 border-2" style="border-color: var(--tube-color);">Aberto</label>
+                    <input type="radio" id="closed-tube" name="tube-type" value="closed" class="hidden control-radio">
+                    <label for="closed-tube" class="px-6 py-2 rounded-lg cursor-pointer transition-all duration-300 border-2" style="border-color: var(--tube-color);">Fechado</label>
+                </div>
+            </div>
+
+            <div class="w-full md:col-span-2">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-semibold">Harmônico (n)</span>
+                    <span id="harmonic-value" class="font-bold text-lg px-3 py-1 rounded-md" style="background-color: var(--tube-color); color: var(--text-color);">1</span>
+                </div>
+                <input type="range" id="harmonic-slider" min="1" max="10" value="1" step="1">
+                <p id="harmonic-warning" class="text-center text-sm mt-2 h-4" style="color: var(--high-pressure);"></p>
+            </div>
+        </div>
+        
+        <!-- Canvas da Simulação -->
+        <div class="relative w-full aspect-[2.5/1] rounded-lg shadow-inner" style="background-color: var(--container-bg); border: 1px solid var(--tube-color);">
+            <canvas id="resonance-canvas"></canvas>
+            <button id="play-button" class="absolute top-3 right-3 w-12 h-12 rounded-full flex items-center justify-center">
+                <svg id="play-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M4.018 14.386L14.637 8.125a.874.874 0 000-1.5L4.018 4.614a.875.875 0 00-1.32.75v8.272a.875.875 0 001.32.75z"></path></svg>
+                <svg id="pause-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M5.75 4.5a.75.75 0 00-1.5 0v11a.75.75 0 001.5 0v-11zM14.25 4.5a.75.75 0 00-1.5 0v11a.75.75 0 001.5 0v-11z"></path></svg>
+            </button>
+        </div>
+
+        <!-- Informações -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
+            <div class="p-4 rounded-lg" style="background-color: var(--info-box-bg); border: 1px solid var(--tube-color);">
+                <p class="text-sm font-semibold uppercase tracking-wider">Comprimento de Onda (λ)</p>
+                <p id="wavelength-info" class="text-2xl font-bold" style="color: var(--ui-color);">3.40 m</p>
+            </div>
+            <div class="p-4 rounded-lg" style="background-color: var(--info-box-bg); border: 1px solid var(--tube-color);">
+                <p id="frequency-label" class="text-sm font-semibold uppercase tracking-wider">Frequência (f)</p>
+                <p id="frequency-info" class="text-2xl font-bold" style="color: var(--ui-color);">100.88 Hz</p>
+            </div>
+        </div>
+
+        <!-- Seção de Explicação (Accordion) -->
+        <div class="border-t pt-4" style="border-color: var(--tube-color);">
+            <button id="explanation-toggle" class="w-full flex justify-between items-center text-left py-2 px-3 rounded-lg hover:bg-gray-100 transition-colors">
+                <span class="text-lg font-semibold">Entenda a Física por Trás da Simulação</span>
+                <svg id="explanation-chevron" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <div id="explanation-content" class="hidden mt-4 px-3 space-y-4 text-justify">
+                <div>
+                    <h4 class="text-xl font-bold mb-2">Ressonância e Ondas Estacionárias</h4>
+                    <p>Este simulador demonstra o fenômeno da <strong>ressonância</strong>. Ela ocorre quando um sistema é excitado a uma de suas frequências naturais, resultando num aumento significativo da amplitude da vibração. Em tubos, isso cria <strong>ondas estacionárias</strong>, que são padrões de vibração onde certos pontos parecem estar parados.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-2">Deslocamento vs. Pressão</h4>
+                    <p>É crucial diferenciar dois conceitos:</p>
+                    <ul class="list-disc list-inside space-y-1 mt-2">
+                        <li><strong>Onda de Deslocamento:</strong> Refere-se ao quanto as partículas de ar se movem. Onde o <strong>movimento</strong> é máximo, temos um <strong>antinó de deslocamento</strong>. Onde é nulo, temos um <strong>nó de deslocamento</strong>.</li>
+                        <li><strong>Onda de Pressão:</strong> Refere-se à variação da pressão. Onde a <strong>cor</strong> varia mais (rosa/preto), temos um <strong>antinó de pressão</strong>. Onde a cor não muda, temos um <strong>nó de pressão</strong>.</li>
+                    </ul>
+                    <p class="mt-2">O fato mais importante é que estas duas ondas estão <strong>90° fora de fase</strong>. Um ponto de máximo deslocamento (movimento) é sempre um ponto de pressão constante (nó), e vice-versa.</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2">Tubo Aberto</h4>
+                        <p>As extremidades abertas são <strong>nós de pressão</strong> (pressão atmosférica) e <strong>antinós de deslocamento</strong> (movimento livre). Permite todos os harmônicos (n = 1, 2, 3, ...) e seu timbre se aproxima de uma <strong>onda senoidal</strong>.</p>
+                        <p class="mt-1 text-sm"><strong>Exemplos:</strong> Flauta transversal, flauta doce, saxofone e a maioria dos tubos de órgão.</p>
+                        <p class="mt-2 font-mono bg-gray-100 p-2 rounded">f<sub>n</sub> = (n * v) / 2L</p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2">Tubo Fechado</h4>
+                        <p>A extremidade fechada é um <strong>antinó de pressão</strong> e um <strong>nó de deslocamento</strong> (partículas paradas). Permite apenas harmônicos <strong>ímpares</strong> (n = 1, 3, 5, ...) e seu timbre se aproxima de uma <strong>onda quadrada</strong>.</p>
+                         <p class="mt-1 text-sm"><strong>Exemplos:</strong> Clarinete (que se comporta acusticamente como um tubo fechado), flauta de pã e alguns tipos de tubos de órgão.</p>
+                        <p class="mt-2 font-mono bg-gray-100 p-2 rounded">f<sub>n</sub> = (n * v) / 4L</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rodapé com Créditos -->
+        <footer class="text-center text-xs pt-4 mt-4 border-t" style="border-color: var(--tube-color);">
+            <p class="opacity-70">Créditos: Prof. Glauber Santiago - UFSCar</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // --- Configuração Inicial ---
+        const canvas = document.getElementById('resonance-canvas');
+        const ctx = canvas.getContext('2d');
+        const container = canvas.parentElement;
+
+        // --- Controles da UI ---
+        const tubeTypeRadios = document.querySelectorAll('input[name="tube-type"]');
+        const harmonicSlider = document.getElementById('harmonic-slider');
+        const harmonicValueDisplay = document.getElementById('harmonic-value');
+        const harmonicWarning = document.getElementById('harmonic-warning');
+        const wavelengthInfo = document.getElementById('wavelength-info');
+        const frequencyInfo = document.getElementById('frequency-info');
+        const playButton = document.getElementById('play-button');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const explanationToggle = document.getElementById('explanation-toggle');
+        const explanationContent = document.getElementById('explanation-content');
+        const explanationChevron = document.getElementById('explanation-chevron');
+
+        // --- Constantes Físicas e de Simulação ---
+        const TUBE_LENGTH = 1.70;
+        const SOUND_SPEED = 343;
+        const NUM_PARTICLES_PER_ROW = 150;
+        const NUM_PARTICLE_ROWS = 12;
+
+        // --- Variáveis de Estado ---
+        let tubeType = 'open';
+        let harmonicN = 1;
+        let animationFrameId;
+        let time = 0;
+        let particles = [];
+        let isPlaying = false;
+        let audioReady = false;
+
+        // --- Configuração de Áudio com Tone.js ---
+        const gain = new Tone.Gain(0.2).toDestination(); // Reduzido um pouco o ganho para a onda quadrada
+        const oscillator = new Tone.Oscillator({ type: 'sine', frequency: 440 }).connect(gain);
+
+        // --- Funções de Desenho e Lógica ---
+        function resizeCanvas() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            createParticles();
+            if (!animationFrameId) startAnimation();
+        }
+
+        function createParticles() {
+            particles = [];
+            const tubeStartX = canvas.width * 0.1;
+            const visualLength = canvas.width * 0.8;
+            const tubeHeight = canvas.height * 0.5;
+            const tubeY = (canvas.height - tubeHeight) / 2;
+
+            for (let j = 0; j < NUM_PARTICLE_ROWS; j++) {
+                for (let i = 0; i < NUM_PARTICLES_PER_ROW; i++) {
+                    const x = tubeStartX + (i / (NUM_PARTICLES_PER_ROW - 1)) * visualLength;
+                    const y = tubeY + (tubeHeight / (NUM_PARTICLE_ROWS + 1)) * (j + 1);
+                    particles.push({ originalX: x, x: x, y: y });
+                }
+            }
+        }
+
+        function drawTube() {
+            const tubeHeight = canvas.height * 0.5;
+            const tubeY = (canvas.height - tubeHeight) / 2;
+            const tubeStartX = canvas.width * 0.1;
+            const tubeEndX = canvas.width * 0.9;
+            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--tube-color');
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(tubeStartX, tubeY);
+            ctx.lineTo(tubeEndX, tubeY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(tubeStartX, tubeY + tubeHeight);
+            ctx.lineTo(tubeEndX, tubeY + tubeHeight);
+            ctx.stroke();
+            if (tubeType === 'closed') {
+                ctx.beginPath();
+                ctx.moveTo(tubeEndX, tubeY - 5);
+                ctx.lineTo(tubeEndX, tubeY + tubeHeight + 5);
+                ctx.stroke();
+            }
+        }
+        
+        function getColorForPressure(pressureValue) {
+            // pressureValue está entre -1 e 1
+            const r1 = 200, g1 = 127, b1 = 139; // #C87F8B (High Pressure)
+            const r2 = 0, g2 = 0, b2 = 0;     // #000000 (Low Pressure)
+            
+            const r = r2 + (r1 - r2) * (pressureValue + 1) / 2;
+            const g = g2 + (g1 - g2) * (pressureValue + 1) / 2;
+            const b = b2 + (b1 - b2) * (pressureValue + 1) / 2;
+
+            return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+        }
+
+        function drawParticles(t) {
+            const tubeStartX = canvas.width * 0.1;
+            const visualLength = canvas.width * 0.8;
+            const maxDisplacement = visualLength * 0.04;
+            const omega = t * 0.1;
+            const timeFactorDisplacement = Math.sin(omega);
+            const timeFactorPressure = Math.cos(omega);
+
+            particles.forEach(p => {
+                const physicalX = ((p.originalX - tubeStartX) / visualLength) * TUBE_LENGTH;
+                let displacement = 0, pressure = 0;
+                if (tubeType === 'open') {
+                    displacement = maxDisplacement * Math.cos((harmonicN * Math.PI * physicalX) / TUBE_LENGTH) * timeFactorDisplacement;
+                    pressure = -Math.sin((harmonicN * Math.PI * physicalX) / TUBE_LENGTH) * timeFactorPressure;
+                } else {
+                    if (harmonicN % 2 !== 0) {
+                       displacement = maxDisplacement * Math.cos((harmonicN * Math.PI * physicalX) / (2 * TUBE_LENGTH)) * timeFactorDisplacement;
+                       pressure = -Math.sin((harmonicN * Math.PI * physicalX) / (2 * TUBE_LENGTH)) * timeFactorPressure;
+                    }
+                }
+                p.x = p.originalX + displacement;
+                ctx.fillStyle = getColorForPressure(pressure);
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+        }
+
+        function updateInfo() {
+            let wavelength = 0, frequency = 0, isValid = true;
+            
+            // Define o tipo de onda do oscilador
+            oscillator.type = (tubeType === 'open') ? 'sine' : 'square';
+
+            if (tubeType === 'open') {
+                wavelength = (2 * TUBE_LENGTH) / harmonicN;
+                harmonicWarning.textContent = '';
+            } else {
+                if (harmonicN % 2 === 0) isValid = false;
+                else {
+                    wavelength = (4 * TUBE_LENGTH) / harmonicN;
+                    harmonicWarning.textContent = '';
+                }
+            }
+            if(isValid) {
+                frequency = SOUND_SPEED / wavelength;
+                wavelengthInfo.textContent = `${wavelength.toFixed(2).replace('.',',')} m`;
+                frequencyInfo.textContent = `${frequency.toFixed(2).replace('.',',')} Hz`;
+                if(audioReady) oscillator.frequency.rampTo(frequency, 0.05);
+            } else {
+                wavelengthInfo.textContent = '---';
+                frequencyInfo.textContent = '---';
+                harmonicWarning.textContent = 'Apenas harmônicos ímpares (1, 3, 5...) são permitidos.';
+                if(isPlaying) toggleSound();
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawTube();
+            drawParticles(time);
+            time++;
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        function startAnimation() {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            time = 0;
+            animate();
+        }
+        
+        async function toggleSound() {
+            if (!audioReady) {
+                await Tone.start();
+                audioReady = true;
+            }
+            if(harmonicN % 2 === 0 && tubeType === 'closed') {
+                if(isPlaying) {
+                   oscillator.stop();
+                   isPlaying = false;
+                   playIcon.classList.remove('hidden');
+                   pauseIcon.classList.add('hidden');
+                }
+                return;
+            }
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                updateInfo(); // Garante que o tipo de onda e a frequência estão corretos
+                oscillator.start();
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            } else {
+                oscillator.stop();
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        }
+
+        // --- Manipuladores de Eventos ---
+        tubeTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                tubeType = event.target.value;
+                if (tubeType === 'closed' && harmonicSlider.value % 2 === 0) {
+                    let newValue = parseInt(harmonicSlider.value) - 1;
+                    if (newValue < 1) newValue = 1;
+                    harmonicSlider.value = newValue;
+                }
+                harmonicN = parseInt(harmonicSlider.value);
+                harmonicValueDisplay.textContent = harmonicN;
+                updateInfo();
+            });
+        });
+
+        harmonicSlider.addEventListener('input', (event) => {
+            harmonicN = parseInt(event.target.value);
+            harmonicValueDisplay.textContent = harmonicN;
+            updateInfo();
+        });
+        
+        harmonicSlider.addEventListener('change', (event) => {
+            let n = parseInt(event.target.value);
+            if (tubeType === 'closed' && n % 2 === 0) {
+                n = n > 1 ? n - 1 : 1;
+                harmonicSlider.value = n;
+                harmonicN = n;
+                harmonicValueDisplay.textContent = n;
+            }
+             updateInfo();
+        });
+
+        playButton.addEventListener('click', toggleSound);
+
+        explanationToggle.addEventListener('click', () => {
+            explanationContent.classList.toggle('hidden');
+            explanationChevron.classList.toggle('rotate-180');
+        });
+
+        // --- Inicialização ---
+        window.addEventListener('resize', resizeCanvas);
+        window.onload = () => {
+            resizeCanvas();
+            updateInfo();
+        };
+    </script>
+</body>
+</html>
