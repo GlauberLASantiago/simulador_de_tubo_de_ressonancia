@@ -1,0 +1,8 @@
+﻿node_modules/
+lab/
+scrollcraft/
+package.json
+package-lock.json
+build-sheets.mjs
+index.original.html
+BRIEF.md

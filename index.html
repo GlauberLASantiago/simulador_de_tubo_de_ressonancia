@@ -1,421 +1,2483 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!doctype html>
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modos de Ressonância em Tubos Sonoros</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        /* Nova Paleta de Cores */
-        :root {
-            --bg-color: #E7F0C7;      /* Light Greenish-Yellow */
-            --container-bg: #FFFFFF;  /* White */
-            --tube-color: #E9A97F;    /* Peach/Tan */
-            --text-color: #000000;    /* Black */
-            --ui-color: #C87F8B;      /* Dusty Pink */
-            --high-pressure: #C87F8B; /* Dusty Pink */
-            --low-pressure: #000000;  /* Black */
-            --ui-text-color: #FFFFFF; /* White */
-            --info-box-bg: #FFFFFF;   /* White */
-            --slider-track-color: #BCDFB9; /* Light Green */
-        }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ressonância Acústica · Modos Estacionários em Tubos Sonoros (UFSCar)</title>
+  <meta name="description" content="Experiência interativa e laboratório acústico de ondas estacionárias longitudinais em tubos abertos e fechados. Desenvolvido com base no recurso didático do Prof. Glauber Santiago (UFSCar).">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23070a12'/><circle cx='16' cy='16' r='8' fill='none' stroke='%23f59e0b' stroke-width='2.5'/><circle cx='16' cy='16' r='3' fill='%2338bdf8'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;1,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+  <link rel="stylesheet" href="scrollcraft.css">
+  <style>
+    :root {
+      --sc-canvas:      #070a12;
+      --sc-surface:     #0f1624;
+      --sc-ink:         #f1f5f9;
+      --sc-ink-soft:    #94a3b8;
+      --sc-accent:      #f59e0b;
+      --sc-accent-ink:  #070a12;
+      --sc-font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+      --sc-font-text:    "Inter", system-ui, sans-serif;
+      --sc-font-mono:    "JetBrains Mono", ui-monospace, monospace;
+      --cyan-node:      #38bdf8;
+      --amber-peak:     #f59e0b;
+    }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-        }
+    /* Top Instrumentation Chrome */
+    .site-bar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 55;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sc-4);
+      padding: var(--sc-3) var(--sc-gutter);
+      background: color-mix(in oklab, var(--sc-canvas) 84%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--sc-hairline);
+    }
+    .site-bar__brand {
+      display: flex;
+      align-items: center;
+      gap: var(--sc-3);
+      text-decoration: none;
+      font-family: var(--sc-font-display);
+      font-weight: 700;
+      font-size: var(--sc-t-sm);
+      letter-spacing: var(--sc-track-snug);
+      color: var(--sc-ink);
+    }
+    .site-bar__dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--sc-accent);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--sc-accent) 22%, transparent);
+    }
+    .site-bar__meta {
+      font-family: var(--sc-font-mono);
+      font-size: var(--sc-t-xs);
+      color: var(--sc-ink-soft);
+      display: none;
+    }
+    @media (min-width: 860px) {
+      .site-bar__meta { display: inline-block; }
+    }
+    .site-bar__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--sc-3);
+    }
+    .cta-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background-color: #f59e0b;
+      color: #070a12;
+      font-family: var(--sc-font-display);
+      font-weight: 700;
+      font-size: var(--sc-t-xs);
+      letter-spacing: 0.01em;
+      padding: 0.55rem 1.05rem;
+      border-radius: var(--sc-r-sm);
+      border: 1px solid transparent;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: var(--sc-e1);
+      transition: transform var(--sc-d-fast) var(--sc-ease-out), background-color var(--sc-d-fast) var(--sc-ease-out);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .cta-primary:hover {
+        background-color: #fbbf24;
+      }
+    }
+    .cta-primary:active {
+      transform: scale(0.97) translateY(1px);
+    }
+    .cta-primary.is-playing {
+      background-color: #ef4444;
+      color: #ffffff;
+    }
 
-        /* Estilização customizada para o slider */
-        input[type="range"] {
-            -webkit-appearance: none; appearance: none;
-            width: 100%; height: 8px; background-color: var(--slider-track-color);
-            border-radius: 5px; outline: none; opacity: 0.9;
-            transition: opacity .2s;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none;
-            width: 24px; height: 24px; background: var(--ui-color);
-            cursor: pointer; border-radius: 50%;
-            border: 3px solid var(--container-bg);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        input[type="range"]::-moz-range-thumb {
-            width: 24px; height: 24px; background: var(--ui-color);
-            cursor: pointer; border-radius: 50%;
-            border: 3px solid var(--container-bg);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        
-        .control-radio:checked + label {
-            background-color: var(--ui-color);
-            color: var(--ui-text-color);
-            border-color: var(--ui-color);
-        }
-        
-        /* Botão Play Melhorado */
-        #play-button {
-            background-color: var(--ui-color);
-            color: var(--ui-text-color);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            transition: background-color 0.2s, transform 0.15s ease-out, box-shadow 0.2s ease-out;
-        }
-        #play-button:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            transform: translateY(-2px);
-        }
-        #play-button:active {
-            transform: scale(0.95) translateY(0);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-        }
-        
-        #explanation-toggle svg {
-            transition: transform 0.3s ease-in-out;
-        }
-    </style>
+    /* =========================================================================
+       SIGNATURE MOVE PART 1: Persistent Bottom Standing-Wave Interferometer Rail
+       ========================================================================= */
+    .wave-rail-bar {
+      position: fixed;
+      inset: auto 0 0 0;
+      height: 44px;
+      z-index: 54;
+      background: color-mix(in oklab, var(--sc-canvas) 90%, transparent);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--sc-hairline);
+      display: flex;
+      align-items: center;
+      padding-inline: var(--sc-gutter);
+      gap: var(--sc-4);
+    }
+    .wave-rail__readout {
+      font-family: var(--sc-font-mono);
+      font-size: 0.72rem;
+      color: var(--sc-ink-soft);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .wave-rail__readout strong {
+      color: var(--sc-ink);
+      font-weight: 600;
+    }
+    .wave-rail__track {
+      position: relative;
+      flex: 1;
+      height: 28px;
+      display: flex;
+      align-items: center;
+    }
+    #wave-rail-canvas {
+      width: 100%;
+      height: 28px;
+      display: block;
+    }
+    .wave-rail__waypoints {
+      display: none;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    @media (min-width: 960px) {
+      .wave-rail__waypoints { display: flex; }
+    }
+    .wave-rail__wp {
+      background: transparent;
+      border: 1px solid var(--sc-hairline);
+      color: var(--sc-ink-soft);
+      font-family: var(--sc-font-mono);
+      font-size: 0.68rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--sc-r-sm);
+      cursor: pointer;
+      transition: color var(--sc-d-fast) var(--sc-ease-out), border-color var(--sc-d-fast) var(--sc-ease-out), background-color var(--sc-d-fast) var(--sc-ease-out);
+    }
+    .wave-rail__wp.is-active {
+      color: var(--sc-accent);
+      border-color: color-mix(in oklab, var(--sc-accent) 55%, transparent);
+      background: color-mix(in oklab, var(--sc-accent) 10%, transparent);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .wave-rail__wp:hover {
+        color: var(--sc-ink);
+        border-color: var(--sc-hairline-strong);
+      }
+    }
+
+    /* =========================================================================
+       ACT 1: DIMENSIONAL LAYERED HERO (5 Independent Visual Planes)
+       ========================================================================= */
+    .hero-stage {
+      background: radial-gradient(95% 75% at 55% 42%, #111b2e 0%, #070a12 72%);
+    }
+    .hero-plane {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    /* Plane 1: Far Environment Acoustic Grid */
+    .hero-plane--far {
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-grid-svg {
+      width: 118vw;
+      max-width: none;
+      height: 118vh;
+      opacity: 0.42;
+      transform: translate3d(calc((var(--sc-mx, 0.5) - 0.5) * -18px), calc((var(--sc-my, 0.5) - 0.5) * -12px), 0);
+    }
+    /* Plane 2: Midground Architectural Resonator Cylinder + Pedestal Anchor */
+    .hero-plane--mid {
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 10vh;
+    }
+    .hero-apparatus {
+      position: relative;
+      width: min(88vw, 68rem);
+      aspect-ratio: 16 / 6.2;
+      transform: translate3d(calc((var(--sc-mx, 0.5) - 0.5) * -8px), 0, 0);
+    }
+    #hero-tube-canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: var(--sc-r-md);
+    }
+    /* Plane 4: Near Foreground Cutout (Anodized Caliper & Acoustic Transducer Ring) */
+    .hero-plane--near {
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 10vh;
+    }
+    .hero-caliper-svg {
+      width: min(92vw, 72rem);
+      max-width: none;
+      height: auto;
+      transform: translate3d(calc((var(--sc-mx, 0.5) - 0.5) * 14px), calc((var(--sc-my, 0.5) - 0.5) * 8px), 0);
+      filter: drop-shadow(0 18px 28px rgba(3, 6, 14, 0.75));
+    }
+    /* Plane 5: Foreground Atmosphere */
+    .hero-plane--atmo {
+      z-index: 10;
+      background:
+        radial-gradient(34rem 18rem at 72% 34%, rgba(245, 158, 11, 0.08), transparent 70%),
+        radial-gradient(30rem 20rem at 28% 36%, rgba(56, 189, 248, 0.07), transparent 72%);
+    }
+    .hero-floor-fade {
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 240px;
+      z-index: 12;
+      pointer-events: none;
+      background: linear-gradient(to top, #070a12 18%, rgba(7, 10, 18, 0.86) 58%, transparent 100%);
+    }
+
+    /* Hero Typography & Telemetry Plates */
+    .hero-copy-plate {
+      z-index: 22;
+      background: rgba(7, 10, 18, 0.92);
+      border: 1px solid var(--sc-hairline);
+      border-radius: var(--sc-r-md);
+      padding: var(--sc-5) var(--sc-6);
+      box-shadow: var(--sc-e2), var(--sc-edge);
+      max-width: min(38rem, 88vw);
+    }
+    .hero-copy-plate h1 {
+      color: var(--sc-ink);
+    }
+    .hero-copy-plate p {
+      margin-top: var(--sc-3);
+      color: var(--sc-ink-soft);
+      font-size: var(--sc-t-base);
+      max-width: 48ch;
+    }
+    .hero-telemetry-chip {
+      z-index: 22;
+      top: clamp(4.8rem, 10vh, 7rem);
+      right: var(--sc-gutter);
+      bottom: auto;
+      left: auto;
+      max-width: 22rem;
+      background: rgba(11, 16, 28, 0.94);
+      border: 1px solid var(--sc-hairline-strong);
+      border-radius: var(--sc-r-md);
+      padding: var(--sc-4) var(--sc-5);
+      box-shadow: var(--sc-e2), var(--sc-edge);
+      text-align: left;
+    }
+    .hero-exit-card {
+      z-index: 23;
+      right: var(--sc-gutter);
+      bottom: clamp(4.2rem, 11vh, 7.5rem);
+      left: auto;
+      max-width: min(29rem, 88vw);
+      background: rgba(9, 13, 24, 0.95);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: var(--sc-r-md);
+      padding: var(--sc-4) var(--sc-5);
+      box-shadow: var(--sc-e2);
+      text-align: left;
+    }
+
+    @media (max-width: 860px) {
+      .hero-copy-plate h1.sc-display--xl {
+        font-size: var(--sc-t-2xl);
+      }
+      .hero-plane--mid, .hero-plane--near {
+        padding-bottom: 28vh;
+      }
+      .hero-apparatus {
+        width: 94vw;
+        aspect-ratio: 16 / 8.5;
+      }
+      .hero-telemetry-chip {
+        top: 4.2rem;
+        left: var(--sc-gutter);
+        right: var(--sc-gutter);
+        max-width: none;
+      }
+      .hero-exit-card {
+        left: var(--sc-gutter);
+        right: var(--sc-gutter);
+        bottom: 4.2rem;
+      }
+    }
+
+    /* =========================================================================
+       ACT 2: AUTHORED SILENCE & THE 90° PHASE PARADOX (Flow + Reveal)
+       ========================================================================= */
+    .act-paradox {
+      padding-top: clamp(2.5rem, 5vw, 5rem);
+      padding-bottom: clamp(4rem, 8vw, 8rem);
+      background: #0a0f18;
+      border-top: 1px solid var(--sc-hairline);
+      border-bottom: 1px solid var(--sc-hairline);
+    }
+    .paradox-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--sc-8);
+      align-items: center;
+    }
+    @media (min-width: 960px) {
+      .paradox-grid {
+        grid-template-columns: 5fr 7fr;
+      }
+    }
+    .phase-spec-list {
+      margin-top: var(--sc-6);
+      border-top: 1px solid var(--sc-hairline);
+    }
+    .phase-spec-row {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: var(--sc-4);
+      padding-block: var(--sc-4);
+      border-bottom: 1px solid var(--sc-hairline);
+    }
+    .phase-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 0.45rem;
+    }
+    .phase-dot--cyan { background: var(--cyan-node); box-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+    .phase-dot--amber { background: var(--amber-peak); box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+
+    .orthographic-plate {
+      background: #070b13;
+      border: 1px solid var(--sc-hairline-strong);
+      border-radius: var(--sc-r-md);
+      padding: var(--sc-5);
+      box-shadow: var(--sc-e2), var(--sc-edge);
+    }
+    .orthographic-plate__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sc-2);
+      padding-bottom: var(--sc-3);
+      margin-bottom: var(--sc-3);
+      border-bottom: 1px solid var(--sc-hairline);
+      font-family: var(--sc-font-mono);
+      font-size: var(--sc-t-xs);
+      color: var(--sc-ink-soft);
+    }
+    .orthographic-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Musician Pedagogical Bridge Section inside Act 2 */
+    .musician-bridge {
+      margin-top: var(--sc-10);
+      padding-top: var(--sc-8);
+      border-top: 1px solid var(--sc-hairline-strong);
+    }
+    .musician-bridge__header {
+      max-width: 72ch;
+      margin-bottom: var(--sc-6);
+    }
+    .musician-cards-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--sc-5);
+    }
+    @media (min-width: 900px) {
+      .musician-cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    .musician-card {
+      background: #0d1526;
+      border: 1px solid var(--sc-hairline-strong);
+      border-radius: var(--sc-r-md);
+      padding: var(--sc-5);
+      box-shadow: var(--sc-e1), var(--sc-edge);
+      display: flex;
+      flex-direction: column;
+      gap: var(--sc-3);
+    }
+    .musician-card__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      align-self: flex-start;
+      padding: 0.22rem 0.6rem;
+      border-radius: var(--sc-r-sm);
+      font-family: var(--sc-font-mono);
+      font-size: var(--sc-t-xs);
+      font-weight: 700;
+      background: rgba(245, 158, 11, 0.14);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+    .musician-card__badge--cyan {
+      background: rgba(56, 189, 248, 0.14);
+      color: #7dd3fc;
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .musician-card h3 {
+      font-family: var(--sc-font-display);
+      font-size: var(--sc-t-lg);
+      font-weight: 700;
+      color: var(--sc-ink);
+      margin: 0;
+    }
+    .musician-note-pill {
+      margin-top: 0.4rem;
+      padding: 0.38rem 0.6rem;
+      border-radius: var(--sc-r-sm);
+      background: rgba(56, 189, 248, 0.1);
+      border-left: 3px solid #38bdf8;
+      font-size: 0.78rem;
+      line-height: 1.4;
+      color: #e2e8f0;
+    }
+    .musician-note-pill--amber {
+      background: rgba(245, 158, 11, 0.1);
+      border-left-color: #f59e0b;
+    }
+
+    /* =========================================================================
+       ACT 3: THE PEAK - HARMONIC SWEEP CHAMBER (Pin + Live Probe + Count)
+       ========================================================================= */
+    .chamber-stage {
+      background: #060911;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .chamber-canvas-wrap {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+    #peak-chamber-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+    }
+    .chamber-hud-top {
+      position: relative;
+      z-index: 15;
+      margin-top: clamp(4.2rem, 8vh, 5.5rem);
+      padding-inline: var(--sc-gutter);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: var(--sc-4);
+      pointer-events: none;
+    }
+    .chamber-readout-box {
+      background: rgba(7, 10, 18, 0.94);
+      border: 1px solid var(--sc-hairline-strong);
+      border-radius: var(--sc-r-md);
+      padding: var(--sc-4) var(--sc-5);
+      box-shadow: var(--sc-e2), var(--sc-edge);
+    }
+    .chamber-freq-huge {
+      font-family: var(--sc-font-mono);
+      font-size: clamp(1.8rem, 3.2vw, 3rem);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--sc-accent);
+      letter-spacing: -0.03em;
+    }
+    .chamber-probe-box {
+      background: rgba(7, 10, 18, 0.94);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: var(--sc-r-md);
+      padding: var(--sc-3) var(--sc-4);
+      font-family: var(--sc-font-mono);
+      font-size: var(--sc-t-xs);
+      color: var(--sc-ink);
+      box-shadow: var(--sc-e2);
+    }
+    .chamber-cues-deck {
+      position: absolute;
+      inset: auto var(--sc-gutter) clamp(3.8rem, 8vh, 5.5rem) var(--sc-gutter);
+      z-index: 20;
+      pointer-events: none;
+      display: grid;
+      grid-template-areas: "card";
+    }
+    .chamber-cue-card {
+      grid-area: card;
+      max-width: min(38rem, 92vw);
+      background: rgba(8, 12, 22, 0.95);
+      color: var(--sc-ink);
+      border: 1px solid var(--sc-hairline-strong);
+      border-radius: var(--sc-r-md);
+      padding: var(--sc-5) var(--sc-6);
+      box-shadow: var(--sc-e3), var(--sc-edge);
+    }
+    .chamber-cue-card--trail {
+      justify-self: end;
+    }
+    .chamber-cue-card h2 {
+      font-family: var(--sc-font-display);
+      font-size: var(--sc-t-xl);
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: var(--sc-track-snug);
+      color: var(--sc-ink);
+      margin: 0;
+    }
+    .chamber-cue-card p {
+      margin: var(--sc-2) 0 0 0;
+      color: var(--sc-ink-soft);
+      font-size: var(--sc-t-sm);
+    }
+
+    /* =========================================================================
+       ACT 4: SPECIMEN RAIL - OPEN VS CLOSED GEOMETRY (Pan + Tilt)
+       ========================================================================= */
+    .pan-stage {
+      background: #0a0f1a;
+      display: flex;
+      align-items: center;
+      border-top: 1px solid var(--sc-hairline);
+    }
+    .specimen-rail {
+      display: flex;
+      align-items: stretch;
+      gap: var(--sc-6);
+      padding-inline: var(--sc-gutter);
+      padding-block: var(--sc-6);
+    }
+    .specimen-lead {
+      flex: 0 0 clamp(20rem, 28vw, 26rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-right: var(--sc-4);
+    }
+    .specimen-card {
+      flex: 0 0 clamp(21rem, 29vw, 26rem);
+      background: #101829;
+      border: 1px solid var(--sc-hairline-strong);
+      border-radius: var(--sc-r-md);
+      padding: var(--sc-6);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--sc-4);
+      box-shadow: var(--sc-e2), var(--sc-edge);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .specimen-card:not(:first-of-type) {
+        opacity: clamp(0.65, calc(0.65 + var(--sc-p, 0) * 0.6), 1);
+      }
+    }
+    .specimen-card__top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--sc-font-mono);
+      font-size: var(--sc-t-xs);
+    }
+    .specimen-tag {
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--sc-r-sm);
+      font-weight: 600;
+    }
+    .specimen-tag--open {
+      background: rgba(56, 189, 248, 0.14);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .specimen-tag--closed {
+      background: rgba(245, 158, 11, 0.14);
+      color: #fcd34d;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .specimen-card h3 {
+      font-family: var(--sc-font-display);
+      font-size: var(--sc-t-xl);
+      font-weight: 700;
+      margin: var(--sc-2) 0 0 0;
+      color: var(--sc-ink);
+    }
+    .specimen-diagram {
+      background: #070b14;
+      border: 1px solid var(--sc-hairline);
+      border-radius: var(--sc-r-sm);
+      padding: var(--sc-3);
+    }
+    .specimen-specs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sc-2);
+      padding-top: var(--sc-3);
+      border-top: 1px solid var(--sc-hairline);
+      font-family: var(--sc-font-mono);
+      font-size: var(--sc-t-xs);
+    }
+    .specimen-btn {
+      width: 100%;
+      padding: 0.6rem 0.9rem;
+      background: #172238;
+      color: var(--sc-ink);
+      border: 1px solid var(--sc-hairline-strong);
+      border-radius: var(--sc-r-sm);
+      font-family: var(--sc-font-mono);
+      font-size: var(--sc-t-xs);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color var(--sc-d-fast) var(--sc-ease-out), border-color var(--sc-d-fast) var(--sc-ease-out), transform var(--sc-d-fast) var(--sc-ease-out);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .specimen-btn:hover {
+        background: #1e2d4a;
+        border-color: var(--sc-accent);
+      }
+    }
+    .specimen-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* =========================================================================
+       ACT 5: LIVE ACOUSTIC LABORATORY BENCH (Resolved Close + Tone.js Synth)
+       ========================================================================= */
+    .bench-stage {
+      background: #070a12;
+      border-top: 1px solid var(--sc-hairline);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 3.6rem;
+      padding-bottom: 3rem;
+    }
+    .bench-shell {
+      width: 100%;
+      max-width: var(--sc-maxw);
+      margin-inline: auto;
+      padding-inline: var(--sc-gutter);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--sc-6);
+      align-items: start;
+    }
+    @media (min-width: 980px) {
+      .bench-shell {
+        grid-template-columns: 7fr 5fr;
+      }
+    }
+    .bench-panel {
+      background: #0d1424;
+      border: 1px solid var(--sc-hairline-strong);
+      border-radius: var(--sc-r-md);
+      padding: var(--sc-5);
+      box-shadow: var(--sc-e2), var(--sc-edge);
+    }
+    .bench-canvas-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 2.15 / 1;
+      background: #060911;
+      border: 1px solid var(--sc-hairline-strong);
+      border-radius: var(--sc-r-sm);
+      overflow: hidden;
+    }
+    #resonance-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+    }
+    .bench-audio-bar {
+      margin-top: var(--sc-4);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--sc-4);
+      padding: var(--sc-3) var(--sc-4);
+      background: #080c16;
+      border: 1px solid var(--sc-hairline);
+      border-radius: var(--sc-r-sm);
+    }
+    .segmented-control {
+      background: #070a12;
+      border-radius: var(--sc-r-sm);
+      padding: 3px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--sc-hairline);
+    }
+    .control-radio {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .segmented-control label {
+      text-align: center;
+      padding: 0.45rem 0.75rem;
+      font-size: var(--sc-t-xs);
+      font-weight: 600;
+      color: var(--sc-ink-soft);
+      cursor: pointer;
+      border-radius: 4px;
+      user-select: none;
+      transition: background-color var(--sc-d-fast) var(--sc-ease-out), color var(--sc-d-fast) var(--sc-ease-out);
+    }
+    .control-radio:checked + label {
+      background: #1b2842;
+      color: var(--sc-ink);
+      box-shadow: var(--sc-e1);
+    }
+    .control-radio:focus-visible + label {
+      outline: 2px solid var(--sc-accent);
+      outline-offset: 2px;
+    }
+
+    input[type="range"].lab-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: #070a12;
+      border: 1px solid var(--sc-hairline);
+      border-radius: 999px;
+    }
+    input[type="range"].lab-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--sc-ink);
+      border: 2px solid var(--sc-accent);
+      cursor: pointer;
+      transition: transform var(--sc-d-fast) var(--sc-ease-out);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      input[type="range"].lab-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.15);
+      }
+    }
+
+    .metrics-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--sc-font-mono);
+      font-size: var(--sc-t-xs);
+      margin-top: var(--sc-3);
+    }
+    .metrics-table tr {
+      border-bottom: 1px solid var(--sc-hairline);
+    }
+    .metrics-table td {
+      padding-block: 0.55rem;
+    }
+    .metrics-table td:last-child {
+      text-align: right;
+      font-weight: 700;
+      color: var(--sc-ink);
+    }
+
+    .preset-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: var(--sc-2);
+    }
+    .preset-pill {
+      background: #080c16;
+      border: 1px solid var(--sc-hairline);
+      color: var(--sc-ink-soft);
+      font-family: var(--sc-font-mono);
+      font-size: 0.72rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--sc-r-sm);
+      cursor: pointer;
+      transition: border-color var(--sc-d-fast) var(--sc-ease-out), color var(--sc-d-fast) var(--sc-ease-out);
+    }
+    .preset-pill.is-active, .preset-pill:hover {
+      border-color: var(--sc-accent);
+      color: var(--sc-ink);
+    }
+
+    .bench-music-tip {
+      margin-top: var(--sc-3);
+      padding: 0.55rem 0.75rem;
+      border-radius: var(--sc-r-sm);
+      background: rgba(245, 158, 11, 0.09);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      font-size: 0.76rem;
+      line-height: 1.42;
+      color: var(--sc-ink);
+    }
+    .bench-music-tip strong {
+      color: #fcd34d;
+      font-family: var(--sc-font-mono);
+    }
+
+    .bench-footer {
+      width: 100%;
+      max-width: var(--sc-maxw);
+      margin-inline: auto;
+      padding-inline: var(--sc-gutter);
+      margin-top: var(--sc-3);
+      padding-top: var(--sc-2);
+      border-top: 1px solid var(--sc-hairline);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-family: var(--sc-font-mono);
+      font-size: 0.68rem;
+      line-height: 1.4;
+      color: var(--sc-ink-soft);
+    }
+    .bench-footer__row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .bench-footer a {
+      color: #7dd3fc;
+      text-decoration: none;
+      transition: color var(--sc-d-fast) var(--sc-ease-out);
+    }
+    .bench-footer a:hover {
+      color: var(--sc-accent);
+      text-decoration: underline;
+    }
+
+    @media (max-width: 860px) {
+      .bench-stage {
+        justify-content: flex-start;
+        padding-top: 3.1rem;
+        padding-bottom: 2.6rem;
+      }
+      .bench-shell {
+        gap: 0.45rem;
+      }
+      .bench-panel {
+        padding: 0.55rem 0.75rem;
+      }
+      .bench-canvas-frame {
+        aspect-ratio: 3.1 / 1;
+      }
+      .bench-audio-bar {
+        margin-top: 0.35rem;
+        padding: 0.35rem 0.5rem;
+        gap: 0.35rem;
+      }
+      .bench-music-tip {
+        margin-top: 0.3rem;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.64rem;
+        line-height: 1.3;
+      }
+      .metrics-table {
+        margin-top: 0.25rem;
+        font-size: 0.64rem;
+      }
+      .metrics-table td {
+        padding-block: 0.18rem;
+      }
+      .bench-footer {
+        margin-top: 0.28rem;
+        padding-top: 0.22rem;
+        font-size: 0.54rem;
+        line-height: 1.25;
+        gap: 0.12rem;
+      }
+    }
+  </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body>
 
-    <div class="w-full max-w-4xl rounded-2xl shadow-lg p-6 md:p-8 space-y-6" style="background-color: var(--container-bg); border: 1px solid var(--tube-color);">
-        
-        <header class="text-center pb-4 border-b" style="border-color: var(--tube-color);">
-            <h1 class="text-3xl md:text-4xl font-bold">Ressonância em Tubos Sonoros</h1>
-            <p class="text-md mt-2">Visualize a pressão e o deslocamento das partículas de ar.</p>
-            <p class="text-sm mt-3 opacity-70">Considerando L = 1,70 m e Velocidade do som (v) = 343 m/s</p>
-        </header>
+<span data-sc-progress></span>
+<div class="sc-grain" aria-hidden="true"></div>
 
-        <!-- Controles da Simulação -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center pt-4">
-            <div class="flex flex-col items-center">
-                <span class="font-semibold mb-3">Tipo de Tubo</span>
-                <div class="flex space-x-2">
-                    <input type="radio" id="open-tube" name="tube-type" value="open" class="hidden control-radio" checked>
-                    <label for="open-tube" class="px-6 py-2 rounded-lg cursor-pointer transition-all duration-300 border-2" style="border-color: var(--tube-color);">Aberto</label>
-                    <input type="radio" id="closed-tube" name="tube-type" value="closed" class="hidden control-radio">
-                    <label for="closed-tube" class="px-6 py-2 rounded-lg cursor-pointer transition-all duration-300 border-2" style="border-color: var(--tube-color);">Fechado</label>
-                </div>
-            </div>
+<!-- Top Instrument Bar: Wordmark + Telemetry + Single CTA Label -->
+<header class="site-bar">
+  <a href="#top" class="site-bar__brand">
+    <span class="site-bar__dot" aria-hidden="true"></span>
+    <span>Acústica · UFSCar</span>
+  </a>
+  <span class="site-bar__meta">L = 1,70 m · v = 343 m/s · Ressonância Longitudinal</span>
+  <div class="site-bar__actions">
+    <a href="#bancada" class="cta-primary" id="nav-cta-btn">Ouvir Ressonância</a>
+  </div>
+</header>
 
-            <div class="w-full md:col-span-2">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="font-semibold">Harmônico (n)</span>
-                    <span id="harmonic-value" class="font-bold text-lg px-3 py-1 rounded-md" style="background-color: var(--tube-color); color: var(--text-color);">1</span>
-                </div>
-                <input type="range" id="harmonic-slider" min="1" max="10" value="1" step="1">
-                <p id="harmonic-warning" class="text-center text-sm mt-2 h-4" style="color: var(--high-pressure);"></p>
-            </div>
+<!-- Signature Move Part 1: Persistent Bottom Standing-Wave Interferometer Rail -->
+<aside class="wave-rail-bar" aria-label="Interferômetro de Onda Estacionária">
+  <div class="wave-rail__readout">
+    <span>MODO <strong id="rail-mode-label">n = 1 (Aberto)</strong></span>
+    <span>f = <strong id="rail-freq-label">100,88 Hz</strong></span>
+  </div>
+  <div class="wave-rail__track">
+    <canvas id="wave-rail-canvas" width="600" height="28"></canvas>
+  </div>
+  <nav class="wave-rail__waypoints" aria-label="Saltar para seção">
+    <button type="button" class="wave-rail__wp is-active" data-jump="#act-hero">Tubo 1,70m</button>
+    <button type="button" class="wave-rail__wp" data-jump="#act-paradox">Defasagem 90°</button>
+    <button type="button" class="wave-rail__wp" data-jump="#act-chamber">Varredura n=1..5</button>
+    <button type="button" class="wave-rail__wp" data-jump="#act-specimens">Aberto vs Fechado</button>
+    <button type="button" class="wave-rail__wp" data-jump="#bancada">Bancada</button>
+  </nav>
+</aside>
+
+<main id="top">
+
+  <!-- =======================================================================
+       ACT 1 · RECOGNITION: Dimensional 5-Plane Hero (pin + parallax + kinetic)
+       ======================================================================= -->
+  <section id="act-hero" data-sc-act="pin" data-sc-span="2.4" data-sc-dwell="0.30" data-sc-drift="#070a12">
+    <div data-sc-stage class="hero-stage" id="hero-verify-stage" data-sc-verify-state="hero:n1:p0.0">
+
+      <!-- Plane 1: Far Environment Acoustic Grid -->
+      <div class="hero-plane hero-plane--far" data-sc-parallax="-1.45" aria-hidden="true">
+        <svg class="hero-grid-svg" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="acoustic-grid" width="80" height="80" patternUnits="userSpaceOnUse">
+              <path d="M 80 0 L 0 0 0 80" stroke="#1e293b" stroke-width="1"/>
+              <path d="M 40 0 L 40 80 M 0 40 L 80 40" stroke="#0f172a" stroke-width="0.75"/>
+            </pattern>
+          </defs>
+          <rect width="1600" height="900" fill="url(#acoustic-grid)"/>
+          <circle cx="800" cy="400" r="320" stroke="#1e293b" stroke-width="1" stroke-dasharray="6 6"/>
+          <circle cx="800" cy="400" r="480" stroke="#1e293b" stroke-width="1"/>
+          <line x1="120" y1="400" x2="1480" y2="400" stroke="#334155" stroke-width="1" stroke-dasharray="3 6"/>
+          <text x="145" y="388" fill="#64748b" font-family="JetBrains Mono, monospace" font-size="12">x = 0,00 m (Fonte Acústica)</text>
+          <text x="1310" y="388" fill="#64748b" font-family="JetBrains Mono, monospace" font-size="12">x = 1,70 m (Extremidade)</text>
+        </svg>
+      </div>
+
+      <!-- Plane 2: Midground Borosilicate Resonator Cylinder + Grounded Pedestals -->
+      <div class="hero-plane hero-plane--mid" data-sc-parallax="-0.65">
+        <div class="hero-apparatus">
+          <canvas id="hero-tube-canvas"></canvas>
         </div>
-        
-        <!-- Canvas da Simulação -->
-        <div class="relative w-full aspect-[2.5/1] rounded-lg shadow-inner" style="background-color: var(--container-bg); border: 1px solid var(--tube-color);">
-            <canvas id="resonance-canvas"></canvas>
-            <button id="play-button" class="absolute top-3 right-3 w-12 h-12 rounded-full flex items-center justify-center">
-                <svg id="play-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M4.018 14.386L14.637 8.125a.874.874 0 000-1.5L4.018 4.614a.875.875 0 00-1.32.75v8.272a.875.875 0 001.32.75z"></path></svg>
-                <svg id="pause-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M5.75 4.5a.75.75 0 00-1.5 0v11a.75.75 0 001.5 0v-11zM14.25 4.5a.75.75 0 00-1.5 0v11a.75.75 0 001.5 0v-11z"></path></svg>
-            </button>
-        </div>
+      </div>
 
-        <!-- Informações -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
-            <div class="p-4 rounded-lg" style="background-color: var(--info-box-bg); border: 1px solid var(--tube-color);">
-                <p class="text-sm font-semibold uppercase tracking-wider">Comprimento de Onda (λ)</p>
-                <p id="wavelength-info" class="text-2xl font-bold" style="color: var(--ui-color);">3.40 m</p>
-            </div>
-            <div class="p-4 rounded-lg" style="background-color: var(--info-box-bg); border: 1px solid var(--tube-color);">
-                <p id="frequency-label" class="text-sm font-semibold uppercase tracking-wider">Frequência (f)</p>
-                <p id="frequency-info" class="text-2xl font-bold" style="color: var(--ui-color);">100.88 Hz</p>
-            </div>
-        </div>
+      <!-- Plane 4: Near Foreground Cutout (Anodized Caliper Ring & Transducer Frame) -->
+      <div class="hero-plane hero-plane--near" data-sc-parallax="0.65" aria-hidden="true">
+        <svg class="hero-caliper-svg" viewBox="0 0 1200 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Left Acoustic Transducer Mouth Cutout -->
+          <rect x="64" y="88" width="26" height="244" rx="4" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+          <rect x="84" y="76" width="12" height="268" rx="3" fill="#f59e0b"/>
+          <!-- Center Node Reticle Ring (Dips in middle so copy stays clear) -->
+          <path d="M582 64 H618 V102 H582 Z" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+          <line x1="600" y1="102" x2="600" y2="318" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <circle cx="600" cy="210" r="14" stroke="#f59e0b" stroke-width="2" fill="rgba(245, 158, 11, 0.12)"/>
+          <!-- Right Acoustic Flange -->
+          <rect x="1104" y="76" width="12" height="268" rx="3" fill="#38bdf8"/>
+          <rect x="1110" y="88" width="26" height="244" rx="4" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+          <!-- Shared Grounded Contact Pedestals -->
+          <path d="M240 322 L220 410 H280 L260 322 Z" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+          <path d="M940 322 L920 410 H980 L960 322 Z" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+          <line x1="160" y1="410" x2="1040" y2="410" stroke="#334155" stroke-width="3"/>
+        </svg>
+      </div>
 
-        <!-- Seção de Explicação (Accordion) -->
-        <div class="border-t pt-4" style="border-color: var(--tube-color);">
-            <button id="explanation-toggle" class="w-full flex justify-between items-center text-left py-2 px-3 rounded-lg hover:bg-gray-100 transition-colors">
-                <span class="text-lg font-semibold">Entenda a Física por Trás da Simulação</span>
-                <svg id="explanation-chevron" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </button>
-            <div id="explanation-content" class="hidden mt-4 px-3 space-y-4 text-justify">
-                <div>
-                    <h4 class="text-xl font-bold mb-2">Ressonância e Ondas Estacionárias</h4>
-                    <p>Este simulador demonstra o fenômeno da <strong>ressonância</strong>. Ela ocorre quando um sistema é excitado a uma de suas frequências naturais, resultando num aumento significativo da amplitude da vibração. Em tubos, isso cria <strong>ondas estacionárias</strong>, que são padrões de vibração onde certos pontos parecem estar parados.</p>
-                </div>
-                <div>
-                    <h4 class="text-lg font-semibold mb-2">Deslocamento vs. Pressão</h4>
-                    <p>É crucial diferenciar dois conceitos:</p>
-                    <ul class="list-disc list-inside space-y-1 mt-2">
-                        <li><strong>Onda de Deslocamento:</strong> Refere-se ao quanto as partículas de ar se movem. Onde o <strong>movimento</strong> é máximo, temos um <strong>antinó de deslocamento</strong>. Onde é nulo, temos um <strong>nó de deslocamento</strong>.</li>
-                        <li><strong>Onda de Pressão:</strong> Refere-se à variação da pressão. Onde a <strong>cor</strong> varia mais (rosa/preto), temos um <strong>antinó de pressão</strong>. Onde a cor não muda, temos um <strong>nó de pressão</strong>.</li>
-                    </ul>
-                    <p class="mt-2">O fato mais importante é que estas duas ondas estão <strong>90° fora de fase</strong>. Um ponto de máximo deslocamento (movimento) é sempre um ponto de pressão constante (nó), e vice-versa.</p>
-                </div>
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <h4 class="text-lg font-semibold mb-2">Tubo Aberto</h4>
-                        <p>As extremidades abertas são <strong>nós de pressão</strong> (pressão atmosférica) e <strong>antinós de deslocamento</strong> (movimento livre). Permite todos os harmônicos (n = 1, 2, 3, ...) e seu timbre se aproxima de uma <strong>onda senoidal</strong>.</p>
-                        <p class="mt-1 text-sm"><strong>Exemplos:</strong> Flauta transversal, flauta doce, saxofone e a maioria dos tubos de órgão.</p>
-                        <p class="mt-2 font-mono bg-gray-100 p-2 rounded">f<sub>n</sub> = (n * v) / 2L</p>
-                    </div>
-                    <div>
-                        <h4 class="text-lg font-semibold mb-2">Tubo Fechado</h4>
-                        <p>A extremidade fechada é um <strong>antinó de pressão</strong> e um <strong>nó de deslocamento</strong> (partículas paradas). Permite apenas harmônicos <strong>ímpares</strong> (n = 1, 3, 5, ...) e seu timbre se aproxima de uma <strong>onda quadrada</strong>.</p>
-                         <p class="mt-1 text-sm"><strong>Exemplos:</strong> Clarinete (que se comporta acusticamente como um tubo fechado), flauta de pã e alguns tipos de tubos de órgão.</p>
-                        <p class="mt-2 font-mono bg-gray-100 p-2 rounded">f<sub>n</sub> = (n * v) / 4L</p>
-                    </div>
-                </div>
-            </div>
+      <!-- Plane 5: Foreground Atmosphere & Floor Fade -->
+      <div class="hero-plane hero-plane--atmo" data-sc-parallax="1.15" aria-hidden="true"></div>
+      <div class="hero-floor-fade" aria-hidden="true"></div>
+      <div class="sc-scrim sc-scrim--lead" aria-hidden="true"></div>
+
+      <!-- Cue 1A: Opening Lead Headline (Greet form: 3rd value 0) -->
+      <div class="sc-copy sc-copy--lead hero-copy-plate" data-sc-cue="0 0.52 0 0.15">
+        <div class="sc-label" style="color: var(--sc-accent); margin-bottom: 0.5rem;">Física Acústica e Música · UFSCar</div>
+        <h1 class="sc-display sc-display--xl" data-sc-kinetic="lines">O som que o ar aprisiona.</h1>
+        <p>Dentro de um cilindro de 1,70 m, moléculas invisíveis colidem a 343 m/s até que as fronteiras do tubo transformam ruído em geometria estacionária.</p>
+        <div class="musician-note-pill musician-note-pill--amber" style="margin-top: 0.65rem;">
+          <strong>🎵 Para o Músico:</strong> Pense neste tubo como o corpo de uma <strong>flauta</strong> ou de um <strong>clarinete</strong>. O tamanho do tubo define a nota mais grave (Fundamental) e as divisões do ar lá dentro criam a <strong>Série Harmônica</strong> (oitavas, quintas e terças) e o timbre do instrumento!
         </div>
-        
-        <!-- Rodapé com Créditos -->
-        <footer class="text-center text-xs pt-4 mt-4 border-t" style="border-color: var(--tube-color);">
-            <p class="opacity-70">Créditos: Prof. Glauber Santiago - UFSCar</p>
-        </footer>
+      </div>
+
+      <!-- Cue 1B: Mid-Act Telemetry Readout -->
+      <div class="sc-copy hero-telemetry-chip" data-sc-cue="0.18 0.99 0.08 0.01">
+        <div class="sc-label" style="color: #7dd3fc;">Estado da Coluna de Ar · Leitura Musical</div>
+        <div style="font-family: var(--sc-font-mono); font-size: var(--sc-t-sm); color: var(--sc-ink); margin-top: 0.35rem;">
+          Excitação Longitudinal: <strong id="hero-live-n" style="color: var(--sc-accent);">Modo n = 1</strong>
+        </div>
+        <div style="font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); color: var(--sc-ink-soft); margin-top: 0.2rem;">
+          Nó de deslocamento central · <span id="hero-live-note" style="color: #fcd34d;">Nota aprox.: Sol2 (G2) · Fundamental</span>
+        </div>
+      </div>
+
+      <!-- Cue 1C: Resolved Hero Exit Beat -->
+      <div class="sc-copy hero-exit-card" data-sc-cue="0.50 0.99 0.10 0.01">
+        <div style="font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); color: var(--sc-accent); font-weight: 700;">
+          RESSONÂNCIA FUNDAMENTAL E OITAVAÇÃO
+        </div>
+        <p style="margin: 0.35rem 0 0 0; font-size: var(--sc-t-sm); color: var(--sc-ink);">
+          A 100,88 Hz (nota <strong>Sol2</strong>), meia onda estaciona no tubo. Ao rolar a página, a onda se divide em duas (201,76 Hz, <strong>Sol3</strong>): é exatamente o que acontece quando você sopra mais forte na flauta para "oitavar"!
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =======================================================================
+       ACT 2 · TENSION (Authored Silence): The 90° Phase Paradox (flow + reveal)
+       ======================================================================= -->
+  <section id="act-paradox" class="sc-section act-paradox" data-sc-act="flow" data-sc-drift="#0a0f18">
+    <div class="sc-wrap paradox-grid">
+      
+      <div class="sc-stack" data-sc-in data-sc-stagger="65">
+        <h2 class="sc-display sc-display--lg">Onde o ar para, a pressão explode.</h2>
+        <p class="sc-body">
+          A intuição sugere que a pressão do ar seria máxima onde as moléculas se movem com maior velocidade. Na acústica de tubos ressonantes, ocorre o exato oposto: a onda de deslocamento e a onda de pressão estão defasadas em 90 graus.
+        </p>
+        <p class="sc-body">
+          Um nó de deslocamento funciona como um ponto de encontro onde camadas vizinhas de moléculas convergem e se afastam simultaneamente. O ar naquele ponto não tem para onde fugir, sofrendo compressão e rarefação máximas.
+        </p>
+
+        <div class="phase-spec-list">
+          <div class="phase-spec-row">
+            <span class="phase-dot phase-dot--cyan" aria-hidden="true"></span>
+            <div>
+              <strong style="color: var(--sc-ink); font-family: var(--sc-font-display);">Nó de Pressão (Ciano · ΔP = 0) · "Boca Livre do Instrumento"</strong>
+              <p class="sc-body" style="font-size: var(--sc-t-sm); margin-top: 0.2rem;">
+                Localizado nas bocas abertas à atmosfera (como a ponta da flauta). As moléculas entram e saem livremente com amplitude máxima (antinó de deslocamento), mantendo a pressão local estável.
+              </p>
+            </div>
+          </div>
+          <div class="phase-spec-row">
+            <span class="phase-dot phase-dot--amber" aria-hidden="true"></span>
+            <div>
+              <strong style="color: var(--sc-ink); font-family: var(--sc-font-display);">Antinó de Pressão (Âmbar · |ΔP| Máximo) · "Parede ou Palheta"</strong>
+              <p class="sc-body" style="font-size: var(--sc-t-sm); margin-top: 0.2rem;">
+                Localizado no centro do tubo aberto (n = 1) ou contra uma extremidade fechada (como na boquilha de palheta do clarinete). O ar trava (ξ = 0) enquanto a compressão atinge o ápice.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technical Orthographic Plate with clip-path wipe + scroll-drawn SVG waves -->
+      <figure class="orthographic-plate" data-sc-reveal="left" data-sc-reveal-at="0.10 0.54" style="margin: 0;">
+        <div class="orthographic-plate__header">
+          <span>DIAGRAMA ORTOGRÁFICO · DEFASAGEM DE 90° (π/2 rad)</span>
+          <span style="color: var(--sc-accent);">TUBO ABERTO · n = 2 (λ = 1,70 m · Oitava Sol3)</span>
+        </div>
+        <svg class="orthographic-svg" viewBox="0 0 760 400" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama comparando a onda de deslocamento em ciano e a onda de pressão em âmbar defasadas em 90 graus">
+          <rect x="20" y="20" width="720" height="360" rx="6" fill="#05080f" stroke="#1e293b"/>
+          <!-- Vertical Quarter-Wave Guide Lines -->
+          <g stroke="#1e293b" stroke-width="1" stroke-dasharray="4 4">
+            <line x1="80" y1="40" x2="80" y2="340"/>
+            <line x1="230" y1="40" x2="230" y2="340"/>
+            <line x1="380" y1="40" x2="380" y2="340"/>
+            <line x1="530" y1="40" x2="530" y2="340"/>
+            <line x1="680" y1="40" x2="680" y2="340"/>
+          </g>
+          <!-- Center Equilibrium Axis -->
+          <line x1="60" y1="190" x2="700" y2="190" stroke="#334155" stroke-width="1.5"/>
+          <!-- Tube Walls -->
+          <line x1="80" y1="75" x2="680" y2="75" stroke="#64748b" stroke-width="3"/>
+          <line x1="80" y1="305" x2="680" y2="305" stroke="#64748b" stroke-width="3"/>
+
+          <!-- Displacement Wave cos(2*pi*x/L) in Cyan -->
+          <path id="svg-disp-wave" d="M 80 95 C 140 95, 170 190, 230 190 C 290 190, 320 285, 380 285 C 440 285, 470 190, 530 190 C 590 190, 620 95, 680 95" stroke="#38bdf8" stroke-width="3.5" fill="none"/>
+          <path d="M 80 285 C 140 285, 170 190, 230 190 C 290 190, 320 95, 380 95 C 440 95, 470 190, 530 190 C 590 190, 620 285, 680 285" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.55" fill="none"/>
+
+          <!-- Pressure Wave -sin(2*pi*x/L) in Amber -->
+          <path id="svg-press-wave" d="M 80 190 C 130 190, 175 95, 230 95 C 285 95, 330 190, 380 190 C 430 190, 475 285, 530 285 C 585 285, 630 190, 680 190" stroke="#f59e0b" stroke-width="3.5" fill="none"/>
+          <path d="M 80 190 C 130 190, 175 285, 230 285 C 285 285, 330 190, 380 190 C 430 190, 475 95, 530 95 C 585 95, 630 190, 680 190" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.55" fill="none"/>
+
+          <!-- Key Nodes & Antinodes Callouts -->
+          <circle cx="80" cy="190" r="6" fill="#38bdf8"/>
+          <circle cx="230" cy="95" r="7" fill="#f59e0b"/>
+          <circle cx="230" cy="190" r="5" fill="#05080f" stroke="#38bdf8" stroke-width="2.5"/>
+          <circle cx="380" cy="190" r="6" fill="#38bdf8"/>
+          <circle cx="530" cy="285" r="7" fill="#f59e0b"/>
+          <circle cx="680" cy="190" r="6" fill="#38bdf8"/>
+
+          <!-- Dimension Labels -->
+          <text x="80" y="60" fill="#38bdf8" font-family="JetBrains Mono, monospace" font-size="11" text-anchor="middle">Nó ΔP / Antinó ξ</text>
+          <text x="230" y="60" fill="#f59e0b" font-family="JetBrains Mono, monospace" font-size="11" text-anchor="middle">Antinó ΔP (x=0,42m)</text>
+          <text x="380" y="60" fill="#38bdf8" font-family="JetBrains Mono, monospace" font-size="11" text-anchor="middle">Nó ΔP (x=0,85m)</text>
+          <text x="530" y="60" fill="#f59e0b" font-family="JetBrains Mono, monospace" font-size="11" text-anchor="middle">Antinó ΔP (x=1,28m)</text>
+          <text x="680" y="60" fill="#38bdf8" font-family="JetBrains Mono, monospace" font-size="11" text-anchor="middle">x = 1,70 m</text>
+
+          <!-- Legend Bottom -->
+          <rect x="80" y="328" width="14" height="4" fill="#38bdf8"/>
+          <text x="102" y="334" fill="#cbd5e1" font-family="JetBrains Mono, monospace" font-size="11">Deslocamento ξ(x) = ξ₀ cos(kx)</text>
+          <rect x="380" y="328" width="14" height="4" fill="#f59e0b"/>
+          <text x="402" y="334" fill="#cbd5e1" font-family="JetBrains Mono, monospace" font-size="11">Pressão ΔP(x) = -P₀ sen(kx)</text>
+        </svg>
+      </figure>
 
     </div>
 
-    <script>
-        // --- Configuração Inicial ---
-        const canvas = document.getElementById('resonance-canvas');
-        const ctx = canvas.getContext('2d');
-        const container = canvas.parentElement;
+    <!-- Pedagogical Bridge for Music Students (No Physics Prerequisites Needed) -->
+    <div class="sc-wrap musician-bridge" data-sc-in data-sc-stagger="80">
+      <div class="musician-bridge__header">
+        <span style="font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); color: var(--sc-accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">
+          Guia Didático para Estudantes de Música
+        </span>
+        <h3 class="sc-display sc-display--md" style="margin-top: 0.35rem;">
+          Entendendo sem Fórmulas: O que isso muda no seu instrumento?
+        </h3>
+        <p class="sc-body" style="margin-top: 0.45rem;">
+          Você não precisa decorar equações para entender acústica musical. Tudo o que acontece dentro de uma flauta, clarinete, saxofone ou tubo de órgão resume-se a três ideias práticas:
+        </p>
+      </div>
 
-        // --- Controles da UI ---
-        const tubeTypeRadios = document.querySelectorAll('input[name="tube-type"]');
-        const harmonicSlider = document.getElementById('harmonic-slider');
-        const harmonicValueDisplay = document.getElementById('harmonic-value');
-        const harmonicWarning = document.getElementById('harmonic-warning');
-        const wavelengthInfo = document.getElementById('wavelength-info');
-        const frequencyInfo = document.getElementById('frequency-info');
-        const playButton = document.getElementById('play-button');
-        const playIcon = document.getElementById('play-icon');
-        const pauseIcon = document.getElementById('pause-icon');
-        const explanationToggle = document.getElementById('explanation-toggle');
-        const explanationContent = document.getElementById('explanation-content');
-        const explanationChevron = document.getElementById('explanation-chevron');
+      <div class="musician-cards-grid">
+        <article class="musician-card">
+          <span class="musician-card__badge musician-card__badge--cyan">1. A Analogia do Corredor</span>
+          <h3>Movimento vs. Aperto (Pressão)</h3>
+          <p class="sc-body" style="font-size: var(--sc-t-sm);">
+            Imagine várias pessoas dançando em fila dentro de um corredor estreito. Perto de uma <strong>porta aberta</strong>, todo mundo entra e sai livremente com <strong>máximo movimento</strong> (linha azul), e ninguém fica espremido (<strong>zero pressão</strong>).
+          </p>
+          <p class="sc-body" style="font-size: var(--sc-t-sm);">
+            Já contra uma <strong>parede fechada</strong>, ninguém consegue atravessar o muro (<strong>zero movimento</strong>), mas todos são empurrados contra ele, gerando o <strong>máximo aperto (pico de pressão âmbar)</strong>!
+          </p>
+        </article>
 
-        // --- Constantes Físicas e de Simulação ---
-        const TUBE_LENGTH = 1.70;
-        const SOUND_SPEED = 343;
-        const NUM_PARTICLES_PER_ROW = 150;
-        const NUM_PARTICLE_ROWS = 12;
+        <article class="musician-card">
+          <span class="musician-card__badge musician-card__badge--cyan">2. Tubo Aberto · Flauta e Órgão</span>
+          <h3>Por que a Flauta "Oitava"?</h3>
+          <p class="sc-body" style="font-size: var(--sc-t-sm);">
+            Na <strong>flauta transversal</strong>, na <strong>flauta doce</strong> e nos tubos abertos de órgão, o ar escapa livremente pelas duas pontas (bocal e final do tubo). Isso permite que a coluna de ar se divida em 1, 2, 3, 4, 5 partes iguais.
+          </p>
+          <p class="sc-body" style="font-size: var(--sc-t-sm);">
+            Quando você sopra mais forte sem mudar o dedilhado, a onda se divide ao meio (<strong>n = 2</strong>) e a frequência dobra: a nota salta exatamente uma <strong>Oitava Justa (8ª)</strong>, de <strong>Sol2</strong> para <strong>Sol3</strong>!
+          </p>
+        </article>
 
-        // --- Variáveis de Estado ---
-        let tubeType = 'open';
-        let harmonicN = 1;
-        let animationFrameId;
-        let time = 0;
-        let particles = [];
-        let isPlaying = false;
-        let audioReady = false;
+        <article class="musician-card">
+          <span class="musician-card__badge">3. Tubo Fechado · O Caso do Clarinete</span>
+          <h3>Por que o Clarinete salta uma 12ª?</h3>
+          <p class="sc-body" style="font-size: var(--sc-t-sm);">
+            O <strong>clarinete</strong> é um tubo cilíndrico onde a ponta da boquilha/palheta funciona como uma <strong>extremidade fechada</strong>. Isso causa dois efeitos famosos para todo músico:
+          </p>
+          <p class="sc-body" style="font-size: var(--sc-t-sm);">
+            <strong>1º)</strong> Ele soa <strong>uma oitava inteira mais grave</strong> (<strong>Sol1</strong>, 50,4 Hz) que uma flauta do mesmo tamanho.<br>
+            <strong>2º)</strong> Como o 2º harmônico é cancelado na parede, ao apertar a chave de registro ele salta direto para <strong>n = 3</strong>: uma <strong>Décima-Segunda Justa (8ª + 5ª, Ré3)</strong>!
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
 
-        // --- Configuração de Áudio com Tone.js ---
-        const gain = new Tone.Gain(0.2).toDestination(); // Reduzido um pouco o ganho para a onda quadrada
-        const oscillator = new Tone.Oscillator({ type: 'sine', frequency: 440 }).connect(gain);
+  <!-- =======================================================================
+       ACT 3 · TURN & PEAK: Scroll-Driven Harmonic Sweep Chamber (pin + count)
+       Largest span on the page (3.8vh) + Bespoke Pointer Acoustic Probe
+       ======================================================================= -->
+  <section id="act-chamber" data-sc-act="pin" data-sc-span="3.8" data-sc-dwell="0.36" data-sc-drift="#06080f">
+    <div data-sc-stage class="chamber-stage" id="chamber-verify-stage" data-sc-verify-state="chamber:n1:f101">
+      
+      <div class="chamber-canvas-wrap">
+        <canvas id="peak-chamber-canvas"></canvas>
+      </div>
 
-        // --- Funções de Desenho e Lógica ---
-        function resizeCanvas() {
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-            createParticles();
-            if (!animationFrameId) startAnimation();
-        }
+      <!-- Top Telemetry HUD + Signature Move Part 2 (Live Pointer Acoustic Probe) -->
+      <div class="chamber-hud-top">
+        <div class="chamber-readout-box">
+          <div style="font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); color: var(--sc-ink-soft); text-transform: uppercase; letter-spacing: 0.08em;">
+            Câmara de Varredura da Série Harmônica · Role para Subir os Harmônicos
+          </div>
+          <div style="display: flex; align-items: baseline; gap: var(--sc-4); margin-top: 0.35rem; flex-wrap: wrap;">
+            <div class="chamber-freq-huge">
+              <span data-sc-count="101 504" data-sc-count-at="0.02 0.94">101</span> <span style="font-size: 0.5em; color: var(--sc-ink-soft);">Hz</span>
+            </div>
+            <div style="font-family: var(--sc-font-mono); font-size: var(--sc-t-sm); color: var(--sc-ink);">
+              Harmônico <strong id="chamber-n-badge" style="color: var(--sc-accent);">n = 1</strong> · λ = <strong id="chamber-lambda-badge">3,40 m</strong>
+              <div id="chamber-music-badge" style="font-size: 0.76rem; color: #7dd3fc; margin-top: 0.15rem;">🎵 Nota Sol2 (G2) · 1ª Fundamental</div>
+            </div>
+          </div>
+        </div>
 
-        function createParticles() {
-            particles = [];
-            const tubeStartX = canvas.width * 0.1;
-            const visualLength = canvas.width * 0.8;
-            const tubeHeight = canvas.height * 0.5;
-            const tubeY = (canvas.height - tubeHeight) / 2;
+        <div class="chamber-probe-box" id="chamber-probe-readout">
+          <div style="color: #7dd3fc; font-weight: 700; margin-bottom: 0.2rem;">SONDA ACÚSTICA (PASSE O MOUSE NO TUBO)</div>
+          <div>Posição x: <strong id="probe-x-val">0,85 m</strong> · Fase: <strong id="probe-phase-val">Antinó ΔP</strong></div>
+          <div>Pressão |ΔP|: <strong id="probe-p-val" style="color: var(--sc-accent);">100%</strong> · Movimento |ξ|: <strong id="probe-d-val" style="color: #38bdf8;">0%</strong></div>
+        </div>
+      </div>
 
-            for (let j = 0; j < NUM_PARTICLE_ROWS; j++) {
-                for (let i = 0; i < NUM_PARTICLES_PER_ROW; i++) {
-                    const x = tubeStartX + (i / (NUM_PARTICLES_PER_ROW - 1)) * visualLength;
-                    const y = tubeY + (tubeHeight / (NUM_PARTICLE_ROWS + 1)) * (j + 1);
-                    particles.push({ originalX: x, x: x, y: y });
-                }
-            }
-        }
-
-        function drawTube() {
-            const tubeHeight = canvas.height * 0.5;
-            const tubeY = (canvas.height - tubeHeight) / 2;
-            const tubeStartX = canvas.width * 0.1;
-            const tubeEndX = canvas.width * 0.9;
-            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--tube-color');
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(tubeStartX, tubeY);
-            ctx.lineTo(tubeEndX, tubeY);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(tubeStartX, tubeY + tubeHeight);
-            ctx.lineTo(tubeEndX, tubeY + tubeHeight);
-            ctx.stroke();
-            if (tubeType === 'closed') {
-                ctx.beginPath();
-                ctx.moveTo(tubeEndX, tubeY - 5);
-                ctx.lineTo(tubeEndX, tubeY + tubeHeight + 5);
-                ctx.stroke();
-            }
-        }
+      <!-- 4 Cues across the 3.8vh Peak Span (fade-outs placed cleanly between sample positions) -->
+      <div class="chamber-cues-deck">
         
-        function getColorForPressure(pressureValue) {
-            // pressureValue está entre -1 e 1
-            const r1 = 200, g1 = 127, b1 = 139; // #C87F8B (High Pressure)
-            const r2 = 0, g2 = 0, b2 = 0;     // #000000 (Low Pressure)
+        <div class="chamber-cue-card" data-sc-cue="0 0.22 0 0.25">
+          <h2>1º Harmônico: Nota Fundamental (n = 1 · 100,88 Hz)</h2>
+          <p>Uma única meia-onda ocupa todo o cilindro de 1,70 m, com compressão máxima no meio (0,85 m). <strong>🎵 Na Música:</strong> Soa a nota <strong>Sol2 (G2)</strong>, a nota grave natural (Tônica) de uma flauta ou tubo de órgão aberto deste tamanho.</p>
+        </div>
+
+        <div class="chamber-cue-card chamber-cue-card--trail" data-sc-cue="0.20 0.40 0.20 0.20">
+          <h2>2º Harmônico: A Oitava Justa (n = 2 · 201,76 Hz)</h2>
+          <p>Ao dobrar a frequência, o centro do tubo passa a oscilar livremente entre dois pontos de pressão. <strong>🎵 Na Música:</strong> A nota sobe exatamente uma <strong>8ª Justa (Sol3 / G3)</strong>, como ao soprar mais forte na flauta ou abrir o tudel.</p>
+        </div>
+
+        <div class="chamber-cue-card" data-sc-cue="0.38 0.65 0.14 0.18">
+          <h2>3º Harmônico: A Quinta no Agudo (n = 3 · 302,65 Hz)</h2>
+          <p>Três regiões de pressão dividem a coluna de ar em terços perfeitos (λ = 1,13 m). <strong>🎵 Na Música:</strong> Surge a nota <strong>Ré4 (D4)</strong>, formando uma <strong>12ª Justa (Oitava + Quinta Justa)</strong> acima da fundamental!</p>
+        </div>
+
+        <div class="chamber-cue-card chamber-cue-card--trail" data-sc-cue="0.63 1.0 0.15 0.01">
+          <h2>4º e 5º Harmônicos: Dupla Oitava e Terça Maior (403 a 504 Hz)</h2>
+          <p>Em n = 4 (403,5 Hz) temos a <strong>Dupla Oitava (Sol4 / 15ª)</strong> e em n = 5 (504,4 Hz) surge a nota <strong>Si4 (17ª Maior, a Terça Maior pura dos trompetes e trompas naturais)</strong>, completando a tríade Maior de Sol!</p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =======================================================================
+       ACT 4 · RANGE: Open vs Closed Pipe Specimens (pan + tilt)
+       ======================================================================= -->
+  <section id="act-specimens" data-sc-act="pan" data-sc-span="3.2" data-sc-drift="#0a0f1a">
+    <div data-sc-stage class="pan-stage">
+      <div class="specimen-rail" data-sc-pan="0.06">
+        
+        <div class="specimen-lead sc-stack">
+          <h2 class="sc-display sc-display--md">A fronteira decide quais notas existem.</h2>
+          <p class="sc-body">
+            Por que uma flauta e um clarinete do mesmo tamanho têm notas graves e saltos de registro tão diferentes? Basta tapar uma ponta do tubo para que todos os harmônicos pares desapareçam.
+          </p>
+          <p class="sc-body" style="font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); color: var(--sc-accent);">
+            Clique em qualquer cartão para ouvir e testar esse instrumento na bancada abaixo.
+          </p>
+        </div>
+
+        <!-- Specimen 1 -->
+        <article class="specimen-card" data-sc-tilt="5">
+          <div>
+            <div class="specimen-card__top">
+              <span class="specimen-tag specimen-tag--open">Tubo Aberto · n = 1</span>
+              <span>f₁ = v / 2L</span>
+            </div>
+            <h3>Fundamental da Flauta</h3>
+            <p class="sc-body" style="font-size: var(--sc-t-sm); margin-top: 0.4rem;">
+              Ambas as pontas abertas funcionam como nós de pressão. É como se comporta a <strong>flauta transversal</strong>, a <strong>flauta doce</strong> e o tubo aberto de órgão (Diapasão).
+            </p>
+            <div class="musician-note-pill">
+              🎵 <strong>Som Musical:</strong> Nota <strong>Sol2 (G2)</strong> · Timbre aberto e brilhante com todos os harmônicos (pares e ímpares).
+            </div>
+          </div>
+          <div class="specimen-diagram" aria-hidden="true">
+            <svg viewBox="0 0 260 64" width="100%" height="56">
+              <line x1="12" y1="8" x2="248" y2="8" stroke="#64748b" stroke-width="2.5"/>
+              <line x1="12" y1="56" x2="248" y2="56" stroke="#64748b" stroke-width="2.5"/>
+              <path d="M 12 32 Q 130 -6 248 32" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+              <path d="M 12 32 Q 130 70 248 32" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>
+            </svg>
+          </div>
+          <div class="specimen-specs">
+            <div><span style="color: var(--sc-ink-soft);">Frequência / Nota:</span><br><strong style="color: var(--sc-ink);">100,88 Hz (Sol2)</strong></div>
+            <div><span style="color: var(--sc-ink-soft);">Onda (λ):</span><br><strong style="color: var(--sc-ink);">3,40 m (1ª Justa)</strong></div>
+          </div>
+          <button type="button" class="specimen-btn" data-load-type="open" data-load-n="1">Ouvir Tubo Aberto n = 1 (Sol2)</button>
+        </article>
+
+        <!-- Specimen 2 -->
+        <article class="specimen-card" data-sc-tilt="5">
+          <div>
+            <div class="specimen-card__top">
+              <span class="specimen-tag specimen-tag--closed">Tubo Fechado · n = 1</span>
+              <span>f₁ = v / 4L</span>
+            </div>
+            <h3>Sub-Oitava (Clarinete Grave)</h3>
+            <p class="sc-body" style="font-size: var(--sc-t-sm); margin-top: 0.4rem;">
+              Com uma ponta fechada, cabe apenas 1/4 da onda no tubo. O comprimento de onda dobra para 6,80 m e a nota <strong>cai uma oitava inteira</strong> sem aumentar o tubo!
+            </p>
+            <div class="musician-note-pill musician-note-pill--amber">
+              🎵 <strong>Som Musical:</strong> Nota <strong>Sol1 (G1)</strong> · Explica por que o <strong>clarinete</strong> (registro <em>Chalumeau</em>) e o tubo de órgão <em>Bordão</em> alcançam notas tão graves.
+            </div>
+          </div>
+          <div class="specimen-diagram" aria-hidden="true">
+            <svg viewBox="0 0 260 64" width="100%" height="56">
+              <line x1="12" y1="8" x2="248" y2="8" stroke="#64748b" stroke-width="2.5"/>
+              <line x1="12" y1="56" x2="248" y2="56" stroke="#64748b" stroke-width="2.5"/>
+              <line x1="248" y1="6" x2="248" y2="58" stroke="#f59e0b" stroke-width="4"/>
+              <path d="M 12 32 Q 130 30 248 10" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+              <path d="M 12 32 Q 130 34 248 54" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>
+            </svg>
+          </div>
+          <div class="specimen-specs">
+            <div><span style="color: var(--sc-ink-soft);">Frequência / Nota:</span><br><strong style="color: var(--sc-accent);">50,44 Hz (Sol1)</strong></div>
+            <div><span style="color: var(--sc-ink-soft);">Onda (λ):</span><br><strong style="color: var(--sc-ink);">6,80 m (-1 Oitava)</strong></div>
+          </div>
+          <button type="button" class="specimen-btn" data-load-type="closed" data-load-n="1">Ouvir Tubo Fechado n = 1 (Sol1)</button>
+        </article>
+
+        <!-- Specimen 3 -->
+        <article class="specimen-card" data-sc-tilt="5">
+          <div>
+            <div class="specimen-card__top">
+              <span class="specimen-tag specimen-tag--open">Tubo Aberto · n = 2</span>
+              <span>f₂ = 2 · f₁</span>
+            </div>
+            <h3>Oitava da Flauta (8ª Justa)</h3>
+            <p class="sc-body" style="font-size: var(--sc-t-sm); margin-top: 0.4rem;">
+              Uma onda inteira (λ = 1,70 m) cabe perfeitamente entre duas bocas abertas. É o que acontece ao soprar mais forte na flauta para mudar para a 2ª oitava.
+            </p>
+            <div class="musician-note-pill">
+              🎵 <strong>Som Musical:</strong> Nota <strong>Sol3 (G3)</strong> · Salto de <strong>8ª Justa</strong> acima do Sol2 aberto.
+            </div>
+          </div>
+          <div class="specimen-diagram" aria-hidden="true">
+            <svg viewBox="0 0 260 64" width="100%" height="56">
+              <line x1="12" y1="8" x2="248" y2="8" stroke="#64748b" stroke-width="2.5"/>
+              <line x1="12" y1="56" x2="248" y2="56" stroke="#64748b" stroke-width="2.5"/>
+              <path d="M 12 32 Q 71 -4 130 32 T 248 32" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+            </svg>
+          </div>
+          <div class="specimen-specs">
+            <div><span style="color: var(--sc-ink-soft);">Frequência / Nota:</span><br><strong style="color: var(--sc-ink);">201,76 Hz (Sol3)</strong></div>
+            <div><span style="color: var(--sc-ink-soft);">Onda (λ):</span><br><strong style="color: var(--sc-ink);">1,70 m (8ª Justa)</strong></div>
+          </div>
+          <button type="button" class="specimen-btn" data-load-type="open" data-load-n="2">Ouvir Tubo Aberto n = 2 (Sol3)</button>
+        </article>
+
+        <!-- Specimen 4 -->
+        <article class="specimen-card" data-sc-tilt="5">
+          <div>
+            <div class="specimen-card__top">
+              <span class="specimen-tag specimen-tag--closed">Tubo Fechado · n = 3</span>
+              <span>f₃ = 3v / 4L</span>
+            </div>
+            <h3>Salto de 12ª do Clarinete</h3>
+            <p class="sc-body" style="font-size: var(--sc-t-sm); margin-top: 0.4rem;">
+              Como n = 2 se cancela no tampão (antirressonância), o primeiro harmônico do tubo fechado salta direto para <strong>n = 3</strong> (três vezes a frequência fundamental).
+            </p>
+            <div class="musician-note-pill musician-note-pill--amber">
+              🎵 <strong>Som Musical:</strong> Nota <strong>Ré3 (D3)</strong> · Salto de <strong>12ª Justa (8ª + 5ª)</strong> acima do Sol1 ao acionar a chave de registro do clarinete!
+            </div>
+          </div>
+          <div class="specimen-diagram" aria-hidden="true">
+            <svg viewBox="0 0 260 64" width="100%" height="56">
+              <line x1="12" y1="8" x2="248" y2="8" stroke="#64748b" stroke-width="2.5"/>
+              <line x1="12" y1="56" x2="248" y2="56" stroke="#64748b" stroke-width="2.5"/>
+              <line x1="248" y1="6" x2="248" y2="58" stroke="#f59e0b" stroke-width="4"/>
+              <path d="M 12 32 Q 90 -4 169 32 Q 208 50 248 52" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+            </svg>
+          </div>
+          <div class="specimen-specs">
+            <div><span style="color: var(--sc-ink-soft);">Frequência / Nota:</span><br><strong style="color: var(--sc-accent);">151,32 Hz (Ré3)</strong></div>
+            <div><span style="color: var(--sc-ink-soft);">Onda (λ):</span><br><strong style="color: var(--sc-ink);">2,27 m (12ª Justa)</strong></div>
+          </div>
+          <button type="button" class="specimen-btn" data-load-type="closed" data-load-n="3">Ouvir Tubo Fechado n = 3 (Ré3)</button>
+        </article>
+
+        <!-- Specimen 5 -->
+        <article class="specimen-card" data-sc-tilt="5">
+          <div>
+            <div class="specimen-card__top">
+              <span class="specimen-tag specimen-tag--closed">Tubo Fechado · n = 5</span>
+              <span>f₅ = 5v / 4L</span>
+            </div>
+            <h3>Terça Maior Aguda (n = 5)</h3>
+            <p class="sc-body" style="font-size: var(--sc-t-sm); margin-top: 0.4rem;">
+              O segundo sobretom do tubo fechado é o 5º harmônico (5 quartos de onda), gerando três nós e três ventres de pressão até o tampão.
+            </p>
+            <div class="musician-note-pill musician-note-pill--amber">
+              🎵 <strong>Som Musical:</strong> Nota <strong>Si3 (B3)</strong> · Intervalo de <strong>17ª Maior (Duas Oitavas + Terça Maior)</strong> acima do Sol1, base do registro sobreagudo.
+            </div>
+          </div>
+          <div class="specimen-diagram" aria-hidden="true">
+            <svg viewBox="0 0 260 64" width="100%" height="56">
+              <line x1="12" y1="8" x2="248" y2="8" stroke="#64748b" stroke-width="2.5"/>
+              <line x1="12" y1="56" x2="248" y2="56" stroke="#64748b" stroke-width="2.5"/>
+              <line x1="248" y1="6" x2="248" y2="58" stroke="#f59e0b" stroke-width="4"/>
+              <path d="M 12 32 Q 59 -4 106 32 T 200 32 Q 224 14 248 12" stroke="#f59e0b" stroke-width="2.5" fill="none"/>
+            </svg>
+          </div>
+          <div class="specimen-specs">
+            <div><span style="color: var(--sc-ink-soft);">Frequência / Nota:</span><br><strong style="color: var(--sc-accent);">252,21 Hz (Si3)</strong></div>
+            <div><span style="color: var(--sc-ink-soft);">Onda (λ):</span><br><strong style="color: var(--sc-ink);">1,36 m (17ª Maior)</strong></div>
+          </div>
+          <button type="button" class="specimen-btn" data-load-type="closed" data-load-n="5">Ouvir Tubo Fechado n = 5 (Si3)</button>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =======================================================================
+       ACT 5 · COMMITMENT / RESOLUTION: Live Acoustic Laboratory Bench
+       Last element on page, short span (1.20), greet-and-hold cues so nothing
+       ever fades out and the user operates the full Tone.js simulator.
+       ======================================================================= -->
+  <section id="bancada" data-sc-act="pin" data-sc-span="1.20" data-sc-drift="#070a12">
+    <div data-sc-stage class="bench-stage" data-sc-spotlight id="bench-verify-stage" data-sc-verify-state="bench:open:n1">
+      
+      <div class="bench-shell" data-sc-cue="0 1 0 0">
+        
+        <!-- Left Column: Live Particle & Envelope Canvas + Audio Synthesizer Controls -->
+        <div class="bench-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: var(--sc-3);">
+            <div>
+              <span style="font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); color: var(--sc-accent); font-weight: 700;">BANCADA DE ENSAIO ACÚSTICO E MUSICAL INTERATIVA</span>
+              <h2 class="sc-display" style="font-size: var(--sc-t-xl); margin-top: 0.15rem;">Simulador de Tubo de Ressonância</h2>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
+              <label style="display: inline-flex; align-items: center; gap: 0.38rem; font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); color: var(--sc-ink-soft); cursor: pointer;" title="Exibir envoltórias analíticas de pressão e deslocamento">
+                <input type="checkbox" id="overlay-curves-toggle" checked>
+                <span>Curvas ΔP e ξ</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 0.38rem; font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); color: var(--sc-ink-soft); cursor: pointer;" title="Correção de extremidade acústica de Rayleigh (ΔL = 0,61 · r para r = 5 cm)">
+                <input type="checkbox" id="end-correction-toggle">
+                <span>Correção ΔL (Rayleigh)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="bench-canvas-frame">
+            <canvas id="resonance-canvas"></canvas>
+          </div>
+
+          <div class="bench-audio-bar">
+            <div style="display: flex; align-items: center; gap: var(--sc-3); flex-wrap: wrap;">
+              <button type="button" id="play-button" class="cta-primary" data-sc-magnet="0.24" data-sc-cue="0 1 0 0" data-sc-rise="0">
+                <svg id="play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                <svg id="pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                <span id="play-text">Ouvir Ressonância</span>
+              </button>
+              <button type="button" id="excitation-mode-btn" class="preset-pill is-active" style="font-size: 0.7rem; padding: 0.3rem 0.6rem;" title="Alternar entre síntese modal física de coluna de ar real (com perdas visco-térmicas e sopro) e gerador de tom puro senoidal de bancada">
+                Excitação: Coluna de Ar Real
+              </button>
+              <span id="timbre-badge" style="font-family: var(--sc-font-mono); font-size: 0.7rem; color: var(--sc-ink-soft);">Série Harmônica Completa (1/m¹·⁷⁵)</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <label for="volume-slider" style="font-family: var(--sc-font-mono); font-size: 0.72rem; color: var(--sc-ink-soft);">VOL</label>
+              <input type="range" id="volume-slider" class="lab-slider" style="width: 96px;" min="0" max="1" value="0.5" step="0.05" aria-label="Ajustar volume do sintetizador">
+              <span id="volume-value" style="font-family: var(--sc-font-mono); font-size: 0.75rem; font-weight: 700; width: 2.6rem; text-align: right;">50%</span>
+            </div>
+          </div>
+
+          <div class="bench-music-tip" id="music-guide-box">
+            <strong>🎵 Guia para o Músico:</strong> No <strong>Tubo Aberto (n = 1)</strong>, o ar vibra livremente nas duas pontas como numa <strong>flauta transversal</strong>, produzindo a nota fundamental <strong>Sol2 (100,88 Hz)</strong> com todos os harmônicos da série.
+          </div>
+        </div>
+
+        <!-- Right Column: Coupling Controls, Harmonic Slider, Telemetry & Presets -->
+        <div class="bench-panel">
+          <div style="display: flex; flex-direction: column; gap: var(--sc-3);">
             
-            const r = r2 + (r1 - r2) * (pressureValue + 1) / 2;
-            const g = g2 + (g1 - g2) * (pressureValue + 1) / 2;
-            const b = b2 + (b1 - b2) * (pressureValue + 1) / 2;
+            <div>
+              <div style="font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); color: var(--sc-ink-soft); text-transform: uppercase; margin-bottom: 0.35rem;">
+                1. Tipo de Acoplamento (Formato do Instrumento)
+              </div>
+              <div class="segmented-control" role="radiogroup" aria-label="Tipo de Acoplamento">
+                <input type="radio" id="open-tube" name="tube-type" value="open" class="control-radio" checked>
+                <label for="open-tube">Tubo Aberto (Flauta / Órgão)</label>
+                
+                <input type="radio" id="closed-tube" name="tube-type" value="closed" class="control-radio">
+                <label for="closed-tube">Tubo Fechado (Clarinete / Bordão)</label>
+              </div>
+            </div>
 
-            return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <label for="harmonic-slider" style="font-family: var(--sc-font-mono); font-size: var(--sc-t-xs); color: var(--sc-ink-soft); text-transform: uppercase;">
+                  2. Número do Modo / Harmônico (n)
+                </label>
+                <span id="harmonic-value" style="font-family: var(--sc-font-mono); font-size: var(--sc-t-sm); font-weight: 700; color: var(--sc-accent); background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); padding: 0.1rem 0.55rem; border-radius: 4px;">1</span>
+              </div>
+              <input type="range" id="harmonic-slider" class="lab-slider" min="1" max="10" value="1" step="1">
+              <div id="harmonic-warning" style="font-family: var(--sc-font-mono); font-size: 0.68rem; color: #f87171; min-height: 0.95rem; margin-top: 0.2rem;"></div>
+
+              <div class="preset-pills" aria-label="Atalhos de harmônicos">
+                <button type="button" class="preset-pill is-active" data-n-preset="1">n = 1 (1ª)</button>
+                <button type="button" class="preset-pill" data-n-preset="2">n = 2 (8ª)</button>
+                <button type="button" class="preset-pill" data-n-preset="3">n = 3 (12ª)</button>
+                <button type="button" class="preset-pill" data-n-preset="5">n = 5 (17ª)</button>
+                <button type="button" class="preset-pill" data-n-preset="7">n = 7</button>
+                <button type="button" class="preset-pill" data-n-preset="9">n = 9</button>
+              </div>
+            </div>
+
+            <table class="metrics-table" aria-label="Parâmetros físicos e musicais calculados">
+              <tbody>
+                <tr>
+                  <td style="color: var(--sc-ink-soft);">Nota Musical e Intervalo</td>
+                  <td id="music-note-info" style="color: #fcd34d;">Sol2 (G2) · 1ª Fundamental</td>
+                </tr>
+                <tr>
+                  <td style="color: var(--sc-ink-soft);">Comprimento Efetivo (L<sub>ef</sub>) e Som (v)</td>
+                  <td id="length-info">1,70 m · 343 m/s</td>
+                </tr>
+                <tr>
+                  <td style="color: var(--sc-ink-soft);">Comprimento de Onda (λ)</td>
+                  <td id="wavelength-info" style="color: #38bdf8;">3,40 m</td>
+                </tr>
+                <tr>
+                  <td style="color: var(--sc-ink-soft);">Frequência de Excitação (f)</td>
+                  <td id="frequency-info" style="color: var(--sc-accent);">100,88 Hz</td>
+                </tr>
+                <tr>
+                  <td style="color: var(--sc-ink-soft);">Condição de Fase / Equação</td>
+                  <td id="formula-info">f = (n · v) / 2L</td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+        </div>
+
+      </div>
+
+      <footer class="bench-footer">
+        <div class="bench-footer__row">
+          <span>
+            Desenvolvido pelo professor Glauber Santiago — DAC/UFSCar ·
+            <a href="https://aprenda-musica-comigo.web.app/" target="_blank" rel="noopener noreferrer">aprenda-musica-comigo.web.app</a> •
+            <a href="https://servidores.ufscar.br/glauber/" target="_blank" rel="noopener noreferrer">servidores.ufscar.br/glauber/</a> •
+            <a href="https://glauberia.web.app/" target="_blank" rel="noopener noreferrer">https://glauberia.web.app/</a>
+          </span>
+          <span>Ciano (#38bdf8): Nó ΔP (Movimento Livre) · Âmbar (#f59e0b): Antinó ΔP (Compressão)</span>
+        </div>
+        <div class="bench-footer__row">
+          <span>
+            Apoio: Grupo de Estudos e Pesquisas sobre Inovação em Educação, Tecnologias e Linguagens (Grupo Horizonte-UFSCar) —
+            <a href="https://grupohorizonte.ufscar.br/" target="_blank" rel="noopener noreferrer">grupohorizonte.ufscar.br</a>
+          </span>
+        </div>
+      </footer>
+
+    </div>
+  </section>
+
+</main>
+
+<script src="scrollcraft.js"></script>
+<script>
+  // Mount ScrollCraft Engine untouched
+  ScrollCraft.mount(document.body);
+
+  (function () {
+    'use strict';
+
+    // Physical Constants
+    var TUBE_LENGTH = 1.70;
+    var TUBE_RADIUS = 0.05; // 5.0 cm cylinder radius
+    var RAYLEIGH_FACTOR = 0.61; // ΔL = 0.61 * r per open unbaffled end (Levine-Schwinger / Rayleigh)
+    var SOUND_SPEED = 343;
+    var reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Shared color helper: interpolates Cyan (56, 189, 248) to Warm Amber (245, 158, 11)
+    function pressureColor(intensity, alpha) {
+      var k = Math.min(1, Math.max(0, Math.abs(intensity)));
+      var r = Math.round(56 + (245 - 56) * k);
+      var g = Math.round(189 + (158 - 189) * k);
+      var b = Math.round(248 + (11 - 248) * k);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + (alpha || 0.88) + ')';
+    }
+
+    // Create normalized particle grid [0..1] x [0..1]
+    function makeParticleGrid(cols, rows) {
+      var list = [];
+      for (var r = 0; r < rows; r++) {
+        var ny = (r + 1) / (rows + 1);
+        for (var c = 0; c < cols; c++) {
+          var nx = c / (cols - 1);
+          list.push({ nx: nx, ny: ny });
+        }
+      }
+      return list;
+    }
+
+    var heroParticles = makeParticleGrid(95, 9);
+    var chamberParticles = makeParticleGrid(145, 13);
+    var benchParticles = makeParticleGrid(135, 11);
+
+    // DOM References
+    var heroSection = document.getElementById('act-hero');
+    var heroVerifyStage = document.getElementById('hero-verify-stage');
+    var heroCanvas = document.getElementById('hero-tube-canvas');
+    var heroLiveN = document.getElementById('hero-live-n');
+    var heroLiveNote = document.getElementById('hero-live-note');
+
+    var paradoxSection = document.getElementById('act-paradox');
+    var svgDispWave = document.getElementById('svg-disp-wave');
+    var svgPressWave = document.getElementById('svg-press-wave');
+
+    var chamberSection = document.getElementById('act-chamber');
+    var chamberVerifyStage = document.getElementById('chamber-verify-stage');
+    var chamberCanvas = document.getElementById('peak-chamber-canvas');
+    var chamberNBadge = document.getElementById('chamber-n-badge');
+    var chamberLambdaBadge = document.getElementById('chamber-lambda-badge');
+    var chamberMusicBadge = document.getElementById('chamber-music-badge');
+    var probeXVal = document.getElementById('probe-x-val');
+    var probePhaseVal = document.getElementById('probe-phase-val');
+    var probePVal = document.getElementById('probe-p-val');
+    var probeDVal = document.getElementById('probe-d-val');
+
+    var railCanvas = document.getElementById('wave-rail-canvas');
+    var railModeLabel = document.getElementById('rail-mode-label');
+    var railFreqLabel = document.getElementById('rail-freq-label');
+    var wpButtons = document.querySelectorAll('.wave-rail__wp');
+
+    var benchCanvas = document.getElementById('resonance-canvas');
+    var benchVerifyStage = document.getElementById('bench-verify-stage');
+    var overlayCurvesToggle = document.getElementById('overlay-curves-toggle');
+    var endCorrectionToggle = document.getElementById('end-correction-toggle');
+    var excitationModeBtn = document.getElementById('excitation-mode-btn');
+    var tubeTypeRadios = document.querySelectorAll('input[name="tube-type"]');
+    var harmonicSlider = document.getElementById('harmonic-slider');
+    var harmonicValueDisplay = document.getElementById('harmonic-value');
+    var harmonicWarning = document.getElementById('harmonic-warning');
+    var musicNoteInfo = document.getElementById('music-note-info');
+    var musicGuideBox = document.getElementById('music-guide-box');
+    var lengthInfo = document.getElementById('length-info');
+    var wavelengthInfo = document.getElementById('wavelength-info');
+    var frequencyInfo = document.getElementById('frequency-info');
+    var formulaInfo = document.getElementById('formula-info');
+    var timbreBadge = document.getElementById('timbre-badge');
+    var playButton = document.getElementById('play-button');
+    var navCtaBtn = document.getElementById('nav-cta-btn');
+    var playIcon = document.getElementById('play-icon');
+    var pauseIcon = document.getElementById('pause-icon');
+    var playText = document.getElementById('play-text');
+    var volumeSlider = document.getElementById('volume-slider');
+    var volumeValueDisplay = document.getElementById('volume-value');
+    var presetPills = document.querySelectorAll('.preset-pill[data-n-preset]');
+
+    // Musical Note & Interval Translator for Music Students
+    var NOTE_NAMES_PT = ['Dó', 'Dó#', 'Ré', 'Mib', 'Mi', 'Fá', 'Fá#', 'Sol', 'Sol#', 'Lá', 'Sib', 'Si'];
+    var NOTE_NAMES_EN = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
+    var HARMONIC_INTERVALS = {
+      1: '1ª Justa (Nota Fundamental)',
+      2: '8ª Justa (1ª Oitava)',
+      3: '12ª Justa (Oitava + 5ª Justa)',
+      4: '15ª Justa (Dupla Oitava)',
+      5: '17ª Maior (2 Oitavas + 3ª Maior)',
+      6: '19ª Justa (2 Oitavas + 5ª Justa)',
+      7: '21ª Menor (7ª Harmônica Natural)',
+      8: '22ª Justa (Tripla Oitava)',
+      9: '23ª Maior (3 Oitavas + 2ª Maior / 9ª)',
+      10: '24ª Maior (3 Oitavas + 3ª Maior)'
+    };
+
+    function freqToMusicalPitch(freq) {
+      var midiFloat = 69 + 12 * (Math.log(freq / 440) / Math.LN2);
+      var midi = Math.round(midiFloat);
+      var mod = ((midi % 12) + 12) % 12;
+      var octave = Math.floor(midi / 12) - 1;
+      return NOTE_NAMES_PT[mod] + octave + ' (' + NOTE_NAMES_EN[mod] + octave + ')';
+    }
+
+    function getMusicianGuideHTML(type, n, freq, isAntiResonant) {
+      var pitch = freqToMusicalPitch(freq);
+      var interval = HARMONIC_INTERVALS[n] || (n + 'º Harmônico');
+      if (isAntiResonant) {
+        return '<strong>🎵 Guia para o Músico (Por que o Clarinete não oitava?):</strong> No <strong>Tubo Fechado em n = ' + n + ' (par)</strong>, a onda bate no fundo fechado e volta contra si mesma (cancelamento). Por isso instrumentos cilíndricos fechados como o <strong>clarinete</strong> não conseguem produzir harmônicos pares: mude para <strong>n = ' + (n + 1 <= 9 ? n + 1 : 3) + '</strong> para ouvir a ressonância voltar!';
+      }
+      if (type === 'open') {
+        if (n === 1) {
+          return '<strong>🎵 Guia para o Músico:</strong> No <strong>Tubo Aberto (n = 1)</strong>, o ar vibra livre nas duas pontas como numa <strong>flauta transversal</strong> ou tubo aberto de órgão, soando a fundamental <strong>' + pitch + '</strong> com timbre rico em harmônicos pares e ímpares.';
+        }
+        if (n === 2) {
+          return '<strong>🎵 Guia para o Músico:</strong> Ao passar para <strong>n = 2 (' + pitch + ')</strong>, a onda se divide ao meio e sobe uma <strong>Oitava Justa (8ª)</strong>. É exatamente o que faz o flautista ou saxofonista ao soprar mais rápido para "oitavar"!';
+        }
+        if (n === 3) {
+          return '<strong>🎵 Guia para o Músico:</strong> Em <strong>n = 3 (' + pitch + ')</strong>, o ar se divide em 3 partes e gera uma <strong>12ª Justa (Oitava + Quinta Justa)</strong> acima da fundamental, base dos harmônicos de quinta nos instrumentos de sopro.';
+        }
+        return '<strong>🎵 Guia para o Músico:</strong> Modo aberto <strong>n = ' + n + ' (' + pitch + ')</strong>: forma o intervalo de <strong>' + interval + '</strong> na Série Harmônica natural (como nas notas harmônicas de flauta, trompete e trompa).';
+      } else {
+        if (n === 1) {
+          return '<strong>🎵 Guia para o Músico:</strong> Ao fechar uma ponta (<strong>n = 1 · ' + pitch + '</strong>), a nota <strong>cai uma Oitava Inteira</strong>! É por isso que o <strong>clarinete</strong> (registro grave <em>Chalumeau</em>) e os tubos tapados (<em>Bordão</em>) do órgão soam uma oitava mais graves que uma flauta do mesmo tamanho.';
+        }
+        if (n === 3) {
+          return '<strong>🎵 Guia para o Músico:</strong> Em <strong>n = 3 (' + pitch + ')</strong>, você ouve o famoso <strong>salto de 12ª Justa (Oitava + Quinta) do clarinete</strong> quando se aperta a chave de registro (já que o 2º harmônico é proibido pelo tampão)!';
+        }
+        return '<strong>🎵 Guia para o Músico:</strong> Modo fechado ímpar <strong>n = ' + n + ' (' + pitch + ')</strong>: produz o intervalo de <strong>' + interval + '</strong> sobre a fundamental grave, com o timbre amadeirado característico de tubos fechados (clarinete no registro agudo).';
+      }
+    }
+
+    // State
+    var tubeType = 'open';
+    var harmonicN = 1;
+    var useEndCorrection = false;
+    var excitationMode = 'modal'; // 'modal' (Coluna de Ar Real com amortecimento visco-térmico + sopro) | 'pure' (Gerador Senoidal de Bancada)
+    var isPlaying = false;
+    var audioReady = false;
+    var phaseTime = 0.72; // non-zero initial phase so static frames show vivid wave structure
+    var chamberProbeNx = 0.5;
+    var benchProbeNx = -1;
+
+    // Effective acoustic length helper (Rayleigh end correction ΔL = 0.61 * r per open mouth)
+    function getEffectiveLength(type, applyDeltaL) {
+      if (!applyDeltaL) return TUBE_LENGTH;
+      var deltaL = RAYLEIGH_FACTOR * TUBE_RADIUS; // 0.0305 m
+      return type === 'open' ? TUBE_LENGTH + 2 * deltaL : TUBE_LENGTH + deltaL;
+    }
+
+    // Physical Acoustic Synthesizer Setup (Tone.js)
+    // Replaces the artificial 'square' wave with a real 6-partial Modal Sinusoidal Bank
+    // weighted by visco-thermal wall losses (A_m = 1 / m^1.75) + turbulent air-jet noise
+    // filtered by the cavity resonance.
+    var masterGain = null;
+    var cavityFilter = null;
+    var modalOscs = [];
+    var modalGains = [];
+    var breathNoise = null;
+    var breathFilter = null;
+    var breathGain = null;
+    var NUM_PARTIALS = 6;
+
+    function initAcousticAudio() {
+      if (!window.Tone || masterGain) return;
+      try {
+        masterGain = new Tone.Gain(0.12).toDestination();
+        cavityFilter = new Tone.Filter({
+          type: 'lowpass',
+          frequency: 2600,
+          rolloff: -12,
+          Q: 1.2
+        }).connect(masterGain);
+
+        for (var p = 0; p < NUM_PARTIALS; p++) {
+          var pGain = new Tone.Gain(p === 0 ? 1 : 0).connect(cavityFilter);
+          var pOsc = new Tone.Oscillator({
+            type: 'sine',
+            frequency: 100.88 * (p + 1)
+          }).connect(pGain);
+          modalGains.push(pGain);
+          modalOscs.push(pOsc);
         }
 
-        function drawParticles(t) {
-            const tubeStartX = canvas.width * 0.1;
-            const visualLength = canvas.width * 0.8;
-            const maxDisplacement = visualLength * 0.04;
-            const omega = t * 0.1;
-            const timeFactorDisplacement = Math.sin(omega);
-            const timeFactorPressure = Math.cos(omega);
+        // Subtle air-jet turbulence at the open mouth (Kundt / organ flue excitation)
+        breathGain = new Tone.Gain(0.018).connect(cavityFilter);
+        breathFilter = new Tone.Filter({
+          type: 'bandpass',
+          frequency: 100.88,
+          Q: 14
+        }).connect(breathGain);
+        breathNoise = new Tone.Noise('pink').connect(breathFilter);
+      } catch (e) {}
+    }
+    initAcousticAudio();
 
-            particles.forEach(p => {
-                const physicalX = ((p.originalX - tubeStartX) / visualLength) * TUBE_LENGTH;
-                let displacement = 0, pressure = 0;
-                if (tubeType === 'open') {
-                    displacement = maxDisplacement * Math.cos((harmonicN * Math.PI * physicalX) / TUBE_LENGTH) * timeFactorDisplacement;
-                    pressure = -Math.sin((harmonicN * Math.PI * physicalX) / TUBE_LENGTH) * timeFactorPressure;
-                } else {
-                    if (harmonicN % 2 !== 0) {
-                       displacement = maxDisplacement * Math.cos((harmonicN * Math.PI * physicalX) / (2 * TUBE_LENGTH)) * timeFactorDisplacement;
-                       pressure = -Math.sin((harmonicN * Math.PI * physicalX) / (2 * TUBE_LENGTH)) * timeFactorPressure;
-                    }
-                }
-                p.x = p.originalX + displacement;
-                ctx.fillStyle = getColorForPressure(pressure);
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
-                ctx.fill();
-            });
+    // Update the Physical Modal Synthesizer spectrum according to tube geometry & boundary conditions
+    function syncAcousticSynthesizer(baseFreq, type, n, isAntiResonant) {
+      if (!audioReady || !masterGain || modalOscs.length === 0) return;
+
+      var vol = parseFloat(volumeSlider.value);
+      // In anti-resonance (even mode in closed tube), destructive interference cancels 92% of the standing wave
+      var resonanceFactor = isAntiResonant ? 0.08 : 1.0;
+      masterGain.gain.rampTo(vol * 0.16 * resonanceFactor, 0.06);
+
+      if (cavityFilter) {
+        var cutoff = isAntiResonant ? Math.max(220, baseFreq * 1.5) : Math.min(4800, Math.max(900, baseFreq * 8));
+        cavityFilter.frequency.rampTo(cutoff, 0.06);
+      }
+
+      if (breathFilter && breathGain) {
+        breathFilter.frequency.rampTo(Math.min(4000, Math.max(40, baseFreq)), 0.06);
+        var noiseLevel = (excitationMode === 'modal') ? (isAntiResonant ? 0.032 : 0.018) : 0.003;
+        breathGain.gain.rampTo(noiseLevel, 0.06);
+      }
+
+      for (var i = 0; i < NUM_PARTIALS; i++) {
+        // Determine harmonic multiplier m for each partial in the modal series:
+        // Open tube permits all integer modes (m = 1, 2, 3, 4, 5, 6)
+        // Closed tube permits ONLY odd modes (m = 1, 3, 5, 7, 9, 11) due to rigid boundary reflection
+        var m = (type === 'open') ? (i + 1) : (2 * i + 1);
+        var partialFreq = baseFreq * m;
+
+        // Visco-thermal boundary layer & radiation impedance damping: A_m = m^(-1.75)
+        var partialAmp = 0;
+        if (partialFreq < 12000) {
+          if (i === 0) {
+            partialAmp = 1.0;
+          } else if (excitationMode === 'modal' && !isAntiResonant) {
+            partialAmp = Math.pow(m, -1.75);
+          } else if (excitationMode === 'modal' && isAntiResonant) {
+            partialAmp = Math.pow(m, -2.4) * 0.25;
+          } else {
+            // Pure sinusoidal laboratory driver (monochromatic normal mode)
+            partialAmp = 0;
+          }
         }
 
-        function updateInfo() {
-            let wavelength = 0, frequency = 0, isValid = true;
-            
-            // Define o tipo de onda do oscilador
-            oscillator.type = (tubeType === 'open') ? 'sine' : 'square';
+        modalOscs[i].frequency.rampTo(Math.min(14000, Math.max(20, partialFreq)), 0.05);
+        modalGains[i].gain.rampTo(partialAmp, 0.06);
+      }
+    }
 
-            if (tubeType === 'open') {
-                wavelength = (2 * TUBE_LENGTH) / harmonicN;
-                harmonicWarning.textContent = '';
-            } else {
-                if (harmonicN % 2 === 0) isValid = false;
-                else {
-                    wavelength = (4 * TUBE_LENGTH) / harmonicN;
-                    harmonicWarning.textContent = '';
-                }
-            }
-            if(isValid) {
-                frequency = SOUND_SPEED / wavelength;
-                wavelengthInfo.textContent = `${wavelength.toFixed(2).replace('.',',')} m`;
-                frequencyInfo.textContent = `${frequency.toFixed(2).replace('.',',')} Hz`;
-                if(audioReady) oscillator.frequency.rampTo(frequency, 0.05);
-            } else {
-                wavelengthInfo.textContent = '---';
-                frequencyInfo.textContent = '---';
-                harmonicWarning.textContent = 'Apenas harmônicos ímpares (1, 3, 5...) são permitidos.';
-                if(isPlaying) toggleSound();
-            }
+    // Canvas High-DPI Resize Helper
+    function fitCanvas(cv) {
+      if (!cv) return null;
+      var rect = cv.getBoundingClientRect();
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var w = Math.max(10, Math.round(rect.width * dpr));
+      var h = Math.max(10, Math.round(rect.height * dpr));
+      if (cv.width !== w || cv.height !== h) {
+        cv.width = w;
+        cv.height = h;
+      }
+      var ctx = cv.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx: ctx, w: rect.width, h: rect.height };
+    }
+
+    // Draw Tube & Standing Wave Function (shared across Hero, Peak Chamber, and Lab Bench)
+    function renderTubeSimulation(cv, particleSet, opts) {
+      var m = fitCanvas(cv);
+      if (!m || m.w < 20 || m.h < 20) return;
+      var ctx = m.ctx;
+      var w = m.w;
+      var h = m.h;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Background fill
+      ctx.fillStyle = opts.bg || '#060911';
+      ctx.fillRect(0, 0, w, h);
+
+      var padX = w * (opts.padXFrac || 0.08);
+      var tubeW = w - padX * 2;
+      var tubeH = h * (opts.tubeHFrac || 0.56);
+      var tubeY = (h - tubeH) / 2;
+      var startX = padX;
+      var endX = startX + tubeW;
+
+      var n = opts.n || 1;
+      var isClosed = opts.type === 'closed';
+      var isAntiResonant = isClosed && (n % 2 === 0);
+      var kFactor = isClosed ? (n * Math.PI) / 2 : n * Math.PI;
+      var cosT = Math.cos(opts.t);
+      var sinT = Math.sin(opts.t);
+
+      // Effective physical excitation (in anti-resonance, destructive interference leaves ~8% residual amplitude)
+      var effExcite = isAntiResonant ? 0.08 : (opts.excitation !== undefined ? opts.excitation : 1);
+
+      // Glass cylinder gradient
+      var glassGrad = ctx.createLinearGradient(0, tubeY, 0, tubeY + tubeH);
+      glassGrad.addColorStop(0, 'rgba(30, 41, 59, 0.55)');
+      glassGrad.addColorStop(0.25, 'rgba(15, 23, 42, 0.25)');
+      glassGrad.addColorStop(0.5, 'rgba(51, 65, 85, 0.35)');
+      glassGrad.addColorStop(0.75, 'rgba(15, 23, 42, 0.25)');
+      glassGrad.addColorStop(1, 'rgba(30, 41, 59, 0.55)');
+      ctx.fillStyle = glassGrad;
+      ctx.fillRect(startX, tubeY, tubeW, tubeH);
+
+      // Optional Rayleigh End Correction radiation zone outside open mouths
+      if (opts.endCorrection) {
+        var deltaPx = tubeW * ((RAYLEIGH_FACTOR * TUBE_RADIUS) / TUBE_LENGTH);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 3]);
+        ctx.strokeRect(startX - deltaPx, tubeY + 2, deltaPx, tubeH - 4);
+        if (!isClosed) {
+          ctx.strokeRect(endX, tubeY + 2, deltaPx, tubeH - 4);
         }
-        
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawTube();
-            drawParticles(time);
-            time++;
-            animationFrameId = requestAnimationFrame(animate);
+        ctx.setLineDash([]);
+      }
+
+      // Standing-wave axial glow
+      var steps = 64;
+      var sliceW = tubeW / steps;
+      for (var s = 0; s < steps; s++) {
+        var nx = (s + 0.5) / steps;
+        var pAmp = Math.abs(Math.sin(kFactor * nx) * cosT) * effExcite;
+        if (pAmp > 0.03) {
+          ctx.fillStyle = 'rgba(245, 158, 11,' + (pAmp * 0.16).toFixed(3) + ')';
+          ctx.fillRect(startX + s * sliceW, tubeY + 2, sliceW + 1, tubeH - 4);
+        }
+      }
+
+      // Particles
+      var maxDisp = tubeW * (opts.maxDispFrac || 0.036) * effExcite;
+      var dotRadius = opts.dotRadius || 2.1;
+
+      for (var i = 0; i < particleSet.length; i++) {
+        var pt = particleSet[i];
+        var disp = maxDisp * Math.cos(kFactor * pt.nx) * sinT;
+        var press = -Math.sin(kFactor * pt.nx) * cosT * effExcite;
+        var px = startX + pt.nx * tubeW + disp;
+        var py = tubeY + pt.ny * tubeH;
+        ctx.fillStyle = pressureColor(press, isAntiResonant ? 0.55 : 0.9);
+        ctx.beginPath();
+        ctx.arc(px, py, dotRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Overlay analytical curves (Pressure ΔP in Amber, Displacement ξ in Cyan)
+      if (opts.showCurves) {
+        var midY = tubeY + tubeH / 2;
+        var curveAmp = tubeH * 0.40 * effExcite;
+
+        // When in Anti-Resonance (even n in closed tube), draw the two counter-propagating
+        // waves in 180-degree phase opposition canceling each other out!
+        if (isAntiResonant) {
+          var travAmp = tubeH * 0.22;
+          // Incident wave (forward)
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath();
+          for (var ti = 0; ti <= 100; ti++) {
+            var ui = ti / 100;
+            var yi = midY - Math.sin(kFactor * ui - opts.t) * travAmp;
+            if (ti === 0) ctx.moveTo(startX + ui * tubeW, yi);
+            else ctx.lineTo(startX + ui * tubeW, yi);
+          }
+          ctx.stroke();
+
+          // Reflected wave returning 180° out of phase from the rigid cap
+          ctx.strokeStyle = 'rgba(248, 113, 113, 0.55)';
+          ctx.beginPath();
+          for (var tr = 0; tr <= 100; tr++) {
+            var ur = tr / 100;
+            var yr = midY + Math.sin(kFactor * ur - opts.t) * travAmp;
+            if (tr === 0) ctx.moveTo(startX + ur * tubeW, yr);
+            else ctx.lineTo(startX + ur * tubeW, yr);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
         }
 
-        function startAnimation() {
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            time = 0;
-            animate();
+        // Displacement envelope ξ(x)
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (var xStep = 0; xStep <= 100; xStep++) {
+          var u = xStep / 100;
+          var dy = Math.cos(kFactor * u) * sinT * curveAmp;
+          var cx = startX + u * tubeW;
+          var cy = midY - dy;
+          if (xStep === 0) ctx.moveTo(cx, cy);
+          else ctx.lineTo(cx, cy);
         }
-        
-        async function toggleSound() {
-            if (!audioReady) {
-                await Tone.start();
-                audioReady = true;
-            }
-            if(harmonicN % 2 === 0 && tubeType === 'closed') {
-                if(isPlaying) {
-                   oscillator.stop();
-                   isPlaying = false;
-                   playIcon.classList.remove('hidden');
-                   pauseIcon.classList.add('hidden');
-                }
-                return;
-            }
-            isPlaying = !isPlaying;
-            if (isPlaying) {
-                updateInfo(); // Garante que o tipo de onda e a frequência estão corretos
-                oscillator.start();
-                playIcon.classList.add('hidden');
-                pauseIcon.classList.remove('hidden');
-            } else {
-                oscillator.stop();
-                playIcon.classList.remove('hidden');
-                pauseIcon.classList.add('hidden');
-            }
+        ctx.stroke();
+
+        // Pressure envelope ΔP(x)
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        for (var pStep = 0; pStep <= 100; pStep++) {
+          var u2 = pStep / 100;
+          var pyVal = -Math.sin(kFactor * u2) * cosT * curveAmp;
+          var cx2 = startX + u2 * tubeW;
+          var cy2 = midY - pyVal;
+          if (pStep === 0) ctx.moveTo(cx2, cy2);
+          else ctx.lineTo(cx2, cy2);
         }
+        ctx.stroke();
+      }
 
-        // --- Manipuladores de Eventos ---
-        tubeTypeRadios.forEach(radio => {
-            radio.addEventListener('change', (event) => {
-                tubeType = event.target.value;
-                if (tubeType === 'closed' && harmonicSlider.value % 2 === 0) {
-                    let newValue = parseInt(harmonicSlider.value) - 1;
-                    if (newValue < 1) newValue = 1;
-                    harmonicSlider.value = newValue;
-                }
-                harmonicN = parseInt(harmonicSlider.value);
-                harmonicValueDisplay.textContent = harmonicN;
-                updateInfo();
-            });
-        });
+      // Anti-Resonance Telemetry Banner on Canvas
+      if (isAntiResonant) {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.86)';
+        var bannerW = Math.min(tubeW - 12, 370);
+        var bannerX = startX + (tubeW - bannerW) / 2;
+        var bannerY = tubeY + 8;
+        ctx.fillRect(bannerX, bannerY, bannerW, 22);
+        ctx.strokeStyle = 'rgba(248, 113, 113, 0.65)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bannerX, bannerY, bannerW, 22);
+        ctx.fillStyle = '#fca5a5';
+        ctx.font = '700 10px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('ANTIRRESSONÂNCIA (n PAR): ONDA REFLETIDA CANCELA A INCIDENTE (180°)', startX + tubeW / 2, bannerY + 14);
+        ctx.textAlign = 'start';
+      }
 
-        harmonicSlider.addEventListener('input', (event) => {
-            harmonicN = parseInt(event.target.value);
-            harmonicValueDisplay.textContent = harmonicN;
-            updateInfo();
-        });
-        
-        harmonicSlider.addEventListener('change', (event) => {
-            let n = parseInt(event.target.value);
-            if (tubeType === 'closed' && n % 2 === 0) {
-                n = n > 1 ? n - 1 : 1;
-                harmonicSlider.value = n;
-                harmonicN = n;
-                harmonicValueDisplay.textContent = n;
-            }
-             updateInfo();
-        });
+      // Tube Top & Bottom Walls
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(startX, tubeY);
+      ctx.lineTo(endX, tubeY);
+      ctx.moveTo(startX, tubeY + tubeH);
+      ctx.lineTo(endX, tubeY + tubeH);
+      ctx.stroke();
 
-        playButton.addEventListener('click', toggleSound);
+      // Closed End Cap
+      if (isClosed) {
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(endX - 3, tubeY - 2, 7, tubeH + 4);
+      }
 
-        explanationToggle.addEventListener('click', () => {
-            explanationContent.classList.toggle('hidden');
-            explanationChevron.classList.toggle('rotate-180');
-        });
+      // Ruler ticks along bottom wall
+      ctx.fillStyle = '#64748b';
+      ctx.font = '500 10px "JetBrains Mono", monospace';
+      var tickCount = 5;
+      for (var tk = 0; tk <= tickCount; tk++) {
+        var tf = tk / tickCount;
+        var tx = startX + tf * tubeW;
+        ctx.beginPath();
+        ctx.moveTo(tx, tubeY + tubeH);
+        ctx.lineTo(tx, tubeY + tubeH + 6);
+        ctx.stroke();
+        var meters = (tf * TUBE_LENGTH).toFixed(2).replace('.', ',') + 'm';
+        ctx.fillText(meters, tx - 14, tubeY + tubeH + 18);
+      }
 
-        // --- Inicialização ---
-        window.addEventListener('resize', resizeCanvas);
-        window.onload = () => {
-            resizeCanvas();
-            updateInfo();
-        };
-    </script>
+      // Interactive Pointer Acoustic Probe Reticle
+      if (typeof opts.probeNx === 'number' && opts.probeNx >= 0 && opts.probeNx <= 1) {
+        var prX = startX + opts.probeNx * tubeW;
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(prX, tubeY - 14);
+        ctx.lineTo(prX, tubeY + tubeH + 14);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        var prPress = Math.abs(Math.sin(kFactor * opts.probeNx)) * effExcite;
+        ctx.fillStyle = prPress > 0.7 ? '#f59e0b' : '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(prX, tubeY + tubeH / 2, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Render Persistent Bottom Interferometer Rail (Signature Move Part 1)
+    function renderInterferometerRail(activeN, isClosed, scrollFrac) {
+      if (!railCanvas) return;
+      var m = fitCanvas(railCanvas);
+      if (!m) return;
+      var ctx = m.ctx;
+      var w = m.w;
+      var h = m.h;
+      ctx.clearRect(0, 0, w, h);
+
+      var midY = h / 2;
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, midY);
+      ctx.lineTo(w, midY);
+      ctx.stroke();
+
+      var kFactor = isClosed ? (activeN * Math.PI) / 2 : activeN * Math.PI;
+      var isAnti = isClosed && (activeN % 2 === 0);
+      var amp = h * 0.36 * (isAnti ? 0.15 : 1);
+
+      // Standing wave envelope
+      ctx.strokeStyle = isAnti ? 'rgba(248, 113, 113, 0.75)' : 'rgba(245, 158, 11, 0.78)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      for (var i = 0; i <= 120; i++) {
+        var nx = i / 120;
+        var y = midY - Math.sin(kFactor * nx) * Math.cos(phaseTime) * amp;
+        if (i === 0) ctx.moveTo(nx * w, y);
+        else ctx.lineTo(nx * w, y);
+      }
+      ctx.stroke();
+
+      // Conjugate Displacement wave
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (var j = 0; j <= 120; j++) {
+        var nx2 = j / 120;
+        var y2 = midY - Math.cos(kFactor * nx2) * Math.sin(phaseTime) * amp;
+        if (j === 0) ctx.moveTo(nx2 * w, y2);
+        else ctx.lineTo(nx2 * w, y2);
+      }
+      ctx.stroke();
+
+      // Scroll playhead marker
+      var playX = Math.max(4, Math.min(w - 4, scrollFrac * w));
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(playX, midY, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Update Probe Readout in Peak Chamber
+    function updateChamberProbe(n, nx) {
+      var xMeters = (nx * TUBE_LENGTH).toFixed(2).replace('.', ',');
+      var k = n * Math.PI * nx;
+      var pNorm = Math.round(Math.abs(Math.sin(k)) * 100);
+      var dNorm = Math.round(Math.abs(Math.cos(k)) * 100);
+      if (probeXVal) probeXVal.textContent = xMeters + ' m';
+      if (probePVal) probePVal.textContent = pNorm + '%';
+      if (probeDVal) probeDVal.textContent = dNorm + '%';
+      if (probePhaseVal) {
+        if (pNorm >= 85) probePhaseVal.textContent = 'Antinó ΔP (Compressão)';
+        else if (dNorm >= 85) probePhaseVal.textContent = 'Nó ΔP (Máx. Movimento)';
+        else probePhaseVal.textContent = 'Zona de Transição';
+      }
+    }
+
+    // Pointer Listeners for Acoustic Probe (Signature Move Part 2)
+    if (chamberCanvas) {
+      chamberCanvas.addEventListener('pointermove', function (e) {
+        var r = chamberCanvas.getBoundingClientRect();
+        var padX = r.width * 0.08;
+        var tubeW = r.width - padX * 2;
+        chamberProbeNx = Math.min(1, Math.max(0, (e.clientX - r.left - padX) / tubeW));
+      });
+    }
+    if (benchCanvas) {
+      benchCanvas.addEventListener('pointermove', function (e) {
+        var r = benchCanvas.getBoundingClientRect();
+        var padX = r.width * 0.08;
+        var tubeW = r.width - padX * 2;
+        benchProbeNx = Math.min(1, Math.max(0, (e.clientX - r.left - padX) / tubeW));
+      });
+      benchCanvas.addEventListener('pointerleave', function () {
+        benchProbeNx = -1;
+      });
+    }
+
+    // Interactive Laboratory Bench Logic
+    function updateVolume() {
+      var vol = parseFloat(volumeSlider.value);
+      volumeValueDisplay.textContent = Math.round(vol * 100) + '%';
+      updateBenchInfo();
+    }
+
+    function syncPresetPills() {
+      presetPills.forEach(function (btn) {
+        var pN = parseInt(btn.getAttribute('data-n-preset'), 10);
+        btn.classList.toggle('is-active', pN === harmonicN);
+      });
+    }
+
+    function updateBenchInfo() {
+      var effL = getEffectiveLength(tubeType, useEndCorrection);
+      var isAntiResonant = (tubeType === 'closed') && (harmonicN % 2 === 0);
+      var wavelength = (tubeType === 'open')
+        ? (2 * effL) / harmonicN
+        : (4 * effL) / harmonicN;
+      var frequency = SOUND_SPEED / wavelength;
+      var pitchLabel = freqToMusicalPitch(frequency);
+      var intervalLabel = HARMONIC_INTERVALS[harmonicN] || (harmonicN + 'º Harmônico');
+
+      if (musicNoteInfo) {
+        if (isAntiResonant) {
+          musicNoteInfo.textContent = pitchLabel + ' · Cancelado (Par Proibido)';
+          musicNoteInfo.style.color = '#f87171';
+        } else {
+          musicNoteInfo.textContent = pitchLabel + ' · ' + intervalLabel;
+          musicNoteInfo.style.color = '#fcd34d';
+        }
+      }
+
+      if (musicGuideBox) {
+        musicGuideBox.innerHTML = getMusicianGuideHTML(tubeType, harmonicN, frequency, isAntiResonant);
+      }
+
+      if (lengthInfo) {
+        if (useEndCorrection) {
+          var dLcm = ((effL - TUBE_LENGTH) * 100).toFixed(1).replace('.', ',');
+          lengthInfo.textContent = effL.toFixed(3).replace('.', ',') + ' m (L+' + dLcm + 'cm) · 343 m/s';
+        } else {
+          lengthInfo.textContent = '1,70 m (Ideal) · 343 m/s';
+        }
+      }
+
+      if (excitationModeBtn) {
+        excitationModeBtn.textContent = (excitationMode === 'modal')
+          ? 'Excitação: Coluna de Ar Real'
+          : 'Excitação: Tom Puro (Bancada)';
+        excitationModeBtn.classList.toggle('is-active', excitationMode === 'modal');
+      }
+
+      if (timbreBadge) {
+        if (isAntiResonant) {
+          timbreBadge.textContent = 'Cancelamento de Fase (-22 dB)';
+        } else if (excitationMode === 'pure') {
+          timbreBadge.textContent = 'Modo Normal Monocromático (Senoidal Puro)';
+        } else {
+          timbreBadge.textContent = (tubeType === 'open')
+            ? 'Espectro Modal Completo (m = 1,2,3... · 1/m¹·⁷⁵)'
+            : 'Espectro Modal Ímpar (m = 1,3,5... · 1/m¹·⁷⁵)';
+        }
+      }
+
+      if (formulaInfo) {
+        var lSym = useEndCorrection ? 'L_ef' : 'L';
+        if (tubeType === 'open') {
+          formulaInfo.textContent = 'f = (n · v) / 2' + lSym + ' (Construtiva)';
+        } else if (!isAntiResonant) {
+          formulaInfo.textContent = 'f = (n · v) / 4' + lSym + ' (n ímpar · Construtiva)';
+        } else {
+          formulaInfo.textContent = 'L = ' + (harmonicN / 2) + '·(λ/2) (Antirressonância 180°)';
+        }
+      }
+
+      wavelengthInfo.textContent = wavelength.toFixed(2).replace('.', ',') + ' m';
+      if (!isAntiResonant) {
+        frequencyInfo.textContent = frequency.toFixed(2).replace('.', ',') + ' Hz';
+        frequencyInfo.style.color = 'var(--sc-accent)';
+        harmonicWarning.textContent = '';
+      } else {
+        frequencyInfo.textContent = frequency.toFixed(2).replace('.', ',') + ' Hz (Abafado)';
+        frequencyInfo.style.color = '#f87171';
+        harmonicWarning.textContent = 'Antirressonância física: em n = ' + harmonicN + ' (par), a onda refletida no tampão retorna defasada em 180° e cancela a onda incidente.';
+      }
+
+      syncAcousticSynthesizer(frequency, tubeType, harmonicN, isAntiResonant);
+
+      if (benchVerifyStage) {
+        benchVerifyStage.setAttribute('data-sc-verify-state', 'bench:' + tubeType + ':n' + harmonicN);
+      }
+      syncPresetPills();
+    }
+
+    function syncPlayButtons() {
+      if (isPlaying) {
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'inline';
+        playButton.classList.add('is-playing');
+        playText.textContent = 'Pausar Ressonância';
+        if (navCtaBtn) navCtaBtn.textContent = 'Pausar Ressonância';
+      } else {
+        playIcon.style.display = 'inline';
+        pauseIcon.style.display = 'none';
+        playButton.classList.remove('is-playing');
+        playText.textContent = 'Ouvir Ressonância';
+        if (navCtaBtn) navCtaBtn.textContent = 'Ouvir Ressonância';
+      }
+    }
+
+    async function toggleSound() {
+      initAcousticAudio();
+      if (window.Tone && !audioReady) {
+        await Tone.start();
+        audioReady = true;
+      }
+      isPlaying = !isPlaying;
+      if (isPlaying) {
+        updateBenchInfo();
+        for (var i = 0; i < modalOscs.length; i++) {
+          modalOscs[i].start();
+        }
+        if (breathNoise) breathNoise.start();
+      } else {
+        for (var j = 0; j < modalOscs.length; j++) {
+          modalOscs[j].stop();
+        }
+        if (breathNoise) breathNoise.stop();
+      }
+      syncPlayButtons();
+    }
+
+    // Event Listeners for Bench Controls
+    tubeTypeRadios.forEach(function (radio) {
+      radio.addEventListener('change', function (e) {
+        tubeType = e.target.value;
+        harmonicN = parseInt(harmonicSlider.value, 10);
+        harmonicValueDisplay.textContent = harmonicN;
+        updateBenchInfo();
+      });
+    });
+
+    if (endCorrectionToggle) {
+      endCorrectionToggle.addEventListener('change', function () {
+        useEndCorrection = !!endCorrectionToggle.checked;
+        updateBenchInfo();
+      });
+    }
+
+    if (excitationModeBtn) {
+      excitationModeBtn.addEventListener('click', function () {
+        excitationMode = (excitationMode === 'modal') ? 'pure' : 'modal';
+        updateBenchInfo();
+      });
+    }
+
+    harmonicSlider.addEventListener('input', function (e) {
+      harmonicN = parseInt(e.target.value, 10);
+      harmonicValueDisplay.textContent = harmonicN;
+      updateBenchInfo();
+    });
+
+    presetPills.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var targetN = parseInt(btn.getAttribute('data-n-preset'), 10);
+        harmonicN = targetN;
+        harmonicSlider.value = targetN;
+        harmonicValueDisplay.textContent = targetN;
+        updateBenchInfo();
+      });
+    });
+
+    // Specimen Rail Cards -> Load Mode in Lab Bench
+    document.querySelectorAll('[data-load-n]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var loadType = btn.getAttribute('data-load-type') || 'open';
+        var loadN = parseInt(btn.getAttribute('data-load-n'), 10) || 1;
+        tubeType = loadType;
+        document.getElementById(loadType === 'open' ? 'open-tube' : 'closed-tube').checked = true;
+        harmonicN = loadN;
+        harmonicSlider.value = loadN;
+        harmonicValueDisplay.textContent = loadN;
+        updateBenchInfo();
+        var benchEl = document.getElementById('bancada');
+        if (benchEl) benchEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
+      });
+    });
+
+    // Bottom Interferometer Waypoints Navigation
+    wpButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var sel = btn.getAttribute('data-jump');
+        var target = sel ? document.querySelector(sel) : null;
+        if (target) target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
+      });
+    });
+
+    playButton.addEventListener('click', toggleSound);
+    volumeSlider.addEventListener('input', updateVolume);
+
+    // Master Animation & Scroll-Synchronized Physics Loop
+    function tickPhysics() {
+      if (!reduceMotion) {
+        phaseTime += 0.065;
+      } else {
+        phaseTime = 0.72;
+      }
+
+      var maxScroll = Math.max(1, document.body.scrollHeight - window.innerHeight);
+      var scrollFrac = Math.min(1, Math.max(0, window.scrollY / maxScroll));
+
+      // Read Act Progresses (--sc-p published by ScrollCraft engine)
+      var heroP = parseFloat(heroSection.style.getPropertyValue('--sc-p')) || 0;
+      var paradoxP = parseFloat(paradoxSection.style.getPropertyValue('--sc-p')) || 0;
+      var chamberP = parseFloat(chamberSection.style.getPropertyValue('--sc-p')) || 0;
+
+      // 1. Hero Tube Simulation (wakes up with scroll from n=1 calm to resonant n=1..2)
+      var heroN = heroP > 0.65 ? 2 : 1;
+      var heroExcite = 0.35 + 0.65 * Math.min(1, heroP * 1.6);
+      if (heroLiveN) {
+        heroLiveN.textContent = 'Modo n = ' + heroN + ' (' + (heroN === 1 ? '100,88 Hz' : '201,76 Hz') + ')';
+      }
+      if (heroLiveNote) {
+        heroLiveNote.textContent = heroN === 1
+          ? '🎵 Nota Sol2 (G2) · Fundamental'
+          : '🎵 Nota Sol3 (G3) · 8ª Justa (Oitava)';
+      }
+      if (heroVerifyStage) {
+        heroVerifyStage.setAttribute('data-sc-verify-state', 'hero:n' + heroN + ':p' + heroP.toFixed(2));
+      }
+      renderTubeSimulation(heroCanvas, heroParticles, {
+        n: heroN,
+        type: 'open',
+        t: phaseTime + heroP * Math.PI * 2,
+        excitation: heroExcite,
+        showCurves: true,
+        bg: '#080d18',
+        padXFrac: 0.06,
+        tubeHFrac: 0.68,
+        dotRadius: 2.0
+      });
+
+      // 2. Act 2 SVG Technical Diagram progressive stroke draw
+      if (svgDispWave && svgPressWave) {
+        var drawFrac = reduceMotion ? 1 : Math.min(1, Math.max(0.15, paradoxP * 1.45));
+        var totalLen = 900;
+        svgDispWave.style.strokeDasharray = totalLen;
+        svgDispWave.style.strokeDashoffset = Math.round(totalLen * (1 - drawFrac));
+        svgPressWave.style.strokeDasharray = totalLen;
+        svgPressWave.style.strokeDashoffset = Math.round(totalLen * (1 - drawFrac));
+      }
+
+      // 3. Act 3 PEAK: Scroll-Driven Harmonic Sweep Chamber (n = 1 .. 5)
+      var continuousN = 1 + chamberP * 4;
+      var snappedN = Math.min(5, Math.max(1, Math.round(continuousN)));
+      var chamberLambda = (2 * TUBE_LENGTH) / snappedN;
+      var chamberFreq = SOUND_SPEED / chamberLambda;
+
+      if (chamberNBadge) chamberNBadge.textContent = 'n = ' + snappedN;
+      if (chamberLambdaBadge) chamberLambdaBadge.textContent = chamberLambda.toFixed(2).replace('.', ',') + ' m';
+      if (chamberMusicBadge) {
+        var chPitch = freqToMusicalPitch(chamberFreq);
+        var chInt = HARMONIC_INTERVALS[snappedN] || (snappedN + 'º Harmônico');
+        chamberMusicBadge.textContent = '🎵 Nota ' + chPitch + ' · ' + chInt;
+      }
+      if (chamberVerifyStage) {
+        chamberVerifyStage.setAttribute(
+          'data-sc-verify-state',
+          'chamber:n' + snappedN + ':f' + Math.round(chamberFreq) + ':p' + chamberP.toFixed(2)
+        );
+      }
+      updateChamberProbe(snappedN, chamberProbeNx);
+
+      renderTubeSimulation(chamberCanvas, chamberParticles, {
+        n: snappedN,
+        type: 'open',
+        t: phaseTime + chamberP * Math.PI * 4,
+        excitation: 1,
+        showCurves: true,
+        probeNx: chamberProbeNx,
+        bg: '#060911',
+        padXFrac: 0.08,
+        tubeHFrac: 0.42,
+        dotRadius: 2.3
+      });
+
+      // 4. Act 5: Live Laboratory Bench
+      renderTubeSimulation(benchCanvas, benchParticles, {
+        n: harmonicN,
+        type: tubeType,
+        t: phaseTime,
+        excitation: 1,
+        endCorrection: useEndCorrection,
+        showCurves: overlayCurvesToggle ? overlayCurvesToggle.checked : true,
+        probeNx: benchProbeNx,
+        bg: '#060911',
+        padXFrac: 0.08,
+        tubeHFrac: 0.60,
+        dotRadius: 2.1
+      });
+
+      // 5. Persistent Bottom Interferometer Rail
+      var activeRailN = (scrollFrac > 0.35 && scrollFrac < 0.72) ? snappedN : harmonicN;
+      var activeRailClosed = (scrollFrac >= 0.72) ? (tubeType === 'closed') : false;
+      var railEffL = (scrollFrac >= 0.72) ? getEffectiveLength(tubeType, useEndCorrection) : TUBE_LENGTH;
+      var railWave = activeRailClosed ? (4 * railEffL) / activeRailN : (2 * railEffL) / activeRailN;
+      var railFreq = SOUND_SPEED / railWave;
+
+      if (railModeLabel) {
+        railModeLabel.textContent = 'n = ' + activeRailN + (activeRailClosed ? ' (Fechado)' : ' (Aberto)');
+      }
+      if (railFreqLabel) {
+        railFreqLabel.textContent = railFreq.toFixed(2).replace('.', ',') + ' Hz';
+      }
+      renderInterferometerRail(activeRailN, activeRailClosed, scrollFrac);
+
+      // Highlight active waypoint in bottom rail
+      var activeIdx = 0;
+      if (scrollFrac > 0.84) activeIdx = 4;
+      else if (scrollFrac > 0.62) activeIdx = 3;
+      else if (scrollFrac > 0.32) activeIdx = 2;
+      else if (scrollFrac > 0.16) activeIdx = 1;
+      wpButtons.forEach(function (b, idx) {
+        b.classList.toggle('is-active', idx === activeIdx);
+      });
+
+      requestAnimationFrame(tickPhysics);
+    }
+
+    updateBenchInfo();
+    requestAnimationFrame(tickPhysics);
+  })();
+</script>
 </body>
 </html>
